@@ -201,7 +201,7 @@ export class KieProvider implements AIProvider {
   }: {
     params: AIGenerateParams;
   }): Promise<AITaskResult> {
-    const apiUrl = `${this.baseUrl}/jobs/createTask`;
+    const apiUrl = `${this.baseUrl}/runway/generate`;
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.configs.apiKey}`,
@@ -213,35 +213,33 @@ export class KieProvider implements AIProvider {
 
     // build request params
     let payload: any = {
-      model: params.model,
+      prompt: params.prompt || '',
       callBackUrl: params.callbackUrl,
-      input: {
-        aspect_ratio: 'landscape',
-        n_frames: '10',
-        size: 'standard',
-      },
+      waterMark: 'kie.ai',
+      duration: 5,
+      quality: '720p',
     };
-
-    if (params.prompt) {
-      payload.input.prompt = params.prompt;
-    }
 
     if (params.options) {
       const options = params.options;
-      // text-to-video: use prompt
-      // image-to-video: use image_input
-      // video-to-video: use video_input
-      if (options.image_input && Array.isArray(options.image_input)) {
-        payload.input.image_urls = options.image_input;
+      // image-to-video: use imageUrl
+      if (options.imageUrl) {
+        payload.imageUrl = options.imageUrl;
       }
-      if (options.aspect_ratio) {
-        payload.input.aspect_ratio = options.aspect_ratio;
+      // text-to-video: use aspectRatio
+      if (options.aspectRatio) {
+        payload.aspectRatio = options.aspectRatio;
+      } else if (!options.imageUrl) {
+        // default aspect ratio for text-to-video
+        payload.aspectRatio = '16:9';
       }
+      // duration: 5 or 10
       if (options.duration) {
-        payload.input.n_frames = options.duration;
+        payload.duration = options.duration;
       }
-      if (!payload.input.n_frames) {
-        payload.input.n_frames = '10';
+      // quality: 720p or 1080p
+      if (options.resolution) {
+        payload.quality = options.resolution;
       }
     }
 
