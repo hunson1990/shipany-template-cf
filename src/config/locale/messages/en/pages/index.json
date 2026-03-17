@@ -1,0 +1,408 @@
+{
+  "page": {
+    "show_sections": [
+      "hero",
+      "introduce",
+      "benefits",
+      "usage",
+      "features",
+      "stats",
+      "testimonials",
+      "faq",
+      "cta"
+    ],
+    "sections": {
+      "hero": {
+        "id": "hero",
+        "title": "Turn Photos Into AI Videos",
+        "highlight_text": "AI Videos",
+        "description": "Create romantic, fun, and cinematic moments with AI.<br/>Transform your photos into stunning videos in seconds.",
+        "announcement": {
+          "badge": "New",
+          "title": "🎬 Soul Fuse - AI Video Generator",
+          "url": "/pricing"
+        },
+        "tip": "🎁 Generate your first video for free",
+        "buttons": [
+          {
+            "title": "Get Started",
+            "icon": "Zap",
+            "url": "/pricing",
+            "target": "_self",
+            "variant": "default"
+          },
+          {
+            "title": "Read Document",
+            "icon": "BookOpenText",
+            "url": "/docs",
+            "target": "_blank",
+            "variant": "outline"
+          }
+        ],
+        "show_avatars": true,
+        "avatars_tip": "10k+ users are creating videos with Soul Fuse",
+        "show_award": false,
+        "image": {
+          "src": "/imgs/features/admin.png",
+          "alt": "hero",
+          "width": 1200,
+          "height": 800
+        },
+        "image_invert": {
+          "src": "/imgs/features/admin-dark.png",
+          "alt": "hero",
+          "width": 1200,
+          "height": 800
+        },
+        "background_image": {
+          "src": "/imgs/bg/tree.jpg",
+          "alt": "hero"
+        }
+      },
+      "logos": {
+        "id": "logos",
+        "title": "ShipAny is built on the shoulders of giants",
+        "items": [
+          {
+            "title": "Next.js",
+            "image": {
+              "src": "/imgs/logos/nextjs.svg",
+              "alt": "Next.js"
+            }
+          },
+          {
+            "title": "React",
+            "image": {
+              "src": "/imgs/logos/react.svg",
+              "alt": "React"
+            }
+          },
+          {
+            "title": "TailwindCSS",
+            "image": {
+              "src": "/imgs/logos/tailwindcss.svg",
+              "alt": "TailwindCSS"
+            }
+          },
+          {
+            "title": "Shadcn/UI",
+            "image": {
+              "src": "/imgs/logos/shadcn.svg",
+              "alt": "Shadcn/UI"
+            }
+          },
+          {
+            "title": "Vercel",
+            "image": {
+              "src": "/imgs/logos/vercel.svg",
+              "alt": "Vercel"
+            }
+          }
+        ]
+      },
+      "introduce": {
+        "block": "features-list",
+        "id": "introduce",
+        "title": "What is Soul Fuse",
+        "label": "Introduce",
+        "description": "Soul Fuse is an AI-powered video generation platform that transforms your photos into stunning, cinematic videos with just a few clicks.",
+        "image": {
+          "src": "/imgs/features/landing-page.png",
+          "alt": "introduce"
+        },
+        "items": [
+          {
+            "title": "AI-Powered Generation",
+            "description": "Advanced AI technology that understands your photos and creates beautiful, cinematic videos.",
+            "icon": "RiRobot2Line",
+            "image": {
+              "src": "/imgs/features/1.png",
+              "alt": "introduce"
+            }
+          },
+          {
+            "title": "Multiple Styles",
+            "description": "Choose from various video styles including cinematic, travel, action, and more.",
+            "icon": "RiClapperboardAiLine",
+            "image": {
+              "src": "/imgs/features/2.png",
+              "alt": "introduce"
+            }
+          },
+          {
+            "title": "Fast Processing",
+            "description": "Generate high-quality videos in seconds, not hours.",
+            "icon": "RiCloudy2Fill",
+            "image": {
+              "src": "/imgs/features/3.png",
+              "alt": "introduce"
+            }
+          },
+          {
+            "title": "Easy to Use",
+            "description": "Simple and intuitive interface that anyone can use, no technical skills required.",
+            "icon": "RiSparklesLine",
+            "image": {
+              "src": "/imgs/features/4.png",
+              "alt": "introduce"
+            }
+          }
+        ],
+        "className": "bg-muted"
+      },
+      "benefits": {
+        "block": "features-accordion",
+        "id": "benefits",
+        "title": "Why Choose Soul Fuse",
+        "label": "Benefits",
+        "description": "Experience the power of AI video generation with features designed for creators, marketers, and businesses.",
+        "items": [
+          {
+            "title": "Professional Quality",
+            "description": "Create broadcast-quality videos that look like they were made by professional videographers.",
+            "icon": "RiClapperboardAiLine",
+            "image": {
+              "src": "/imgs/features/user-billing.png",
+              "alt": "benefits"
+            }
+          },
+          {
+            "title": "Unlimited Creativity",
+            "description": "Explore endless possibilities with multiple AI models, styles, and customization options.",
+            "icon": "RiSparklesLine",
+            "image": {
+              "src": "/imgs/features/admin-settings.png",
+              "alt": "benefits"
+            }
+          },
+          {
+            "title": "Affordable Pricing",
+            "description": "Get started for free and scale as you grow. No hidden fees or long-term contracts.",
+            "icon": "RiCreditCard2Line",
+            "image": {
+              "src": "/imgs/features/landing-page.png",
+              "alt": "benefits"
+            }
+          }
+        ]
+      },
+      "usage": {
+        "block": "features-step",
+        "id": "usage",
+        "title": "How to Create Videos with Soul Fuse",
+        "description": "Get started in three simple steps:",
+        "image": {
+          "src": "/imgs/features/1.png",
+          "alt": "usage"
+        },
+        "image_position": "left",
+        "text_align": "center",
+        "items": [
+          {
+            "title": "Upload Your Photo",
+            "description": "Select and upload a photo from your device or choose from our gallery.",
+            "image": {
+              "src": "/imgs/features/5.png",
+              "alt": "usage"
+            }
+          },
+          {
+            "title": "Choose Your Style",
+            "description": "Pick from various video styles like cinematic, travel, action, and more.",
+            "image": {
+              "src": "/imgs/features/6.png",
+              "alt": "usage"
+            }
+          },
+          {
+            "title": "Generate & Download",
+            "description": "Let AI create your video and download it in high quality.",
+            "image": {
+              "src": "/imgs/features/7.png",
+              "alt": "usage"
+            }
+          },
+          {
+            "title": "Share Your Creation",
+            "description": "Share your amazing videos on social media and impress your audience.",
+            "image": {
+              "src": "/imgs/features/8.png",
+              "alt": "usage"
+            }
+          }
+        ],
+        "className": "bg-muted"
+      },
+      "features": {
+        "id": "features",
+        "title": "Key Features of Soul Fuse",
+        "description": "Everything you need to create stunning AI videos.",
+        "items": [
+          {
+            "title": "Advanced AI Models",
+            "description": "Powered by state-of-the-art AI technology for realistic and beautiful video generation.",
+            "icon": "RiRobot2Line"
+          },
+          {
+            "title": "Multiple Video Styles",
+            "description": "Cinematic, travel, action, product showcase, and many more styles to choose from.",
+            "icon": "RiClapperboardAiLine"
+          },
+          {
+            "title": "High-Quality Output",
+            "description": "Generate videos in 4K resolution with smooth motion and professional effects.",
+            "icon": "RiVideoLine"
+          },
+          {
+            "title": "Fast Processing",
+            "description": "Create videos in seconds with our optimized AI infrastructure.",
+            "icon": "RiCloudy2Fill"
+          },
+          {
+            "title": "Easy Customization",
+            "description": "Adjust duration, music, effects, and more to match your vision.",
+            "icon": "RiPaletteLine"
+          },
+          {
+            "title": "Social Media Ready",
+            "description": "Export videos in formats optimized for all major social media platforms.",
+            "icon": "RiShareForwardLine"
+          }
+        ]
+      },
+      "stats": {
+        "id": "stats",
+        "title": "Soul Fuse by the Numbers",
+        "description": "Join thousands of creators using Soul Fuse.",
+        "items": [
+          {
+            "title": "10k+",
+            "description": "Active Users"
+          },
+          {
+            "title": "100k+",
+            "description": "Videos Created"
+          },
+          {
+            "title": "50+",
+            "description": "Video Styles"
+          }
+        ],
+        "className": "bg-muted"
+      },
+      "testimonials": {
+        "id": "testimonials",
+        "title": "What Users Say About Soul Fuse",
+        "description": "Hear from creators and businesses who love Soul Fuse.",
+        "items": [
+          {
+            "name": "Sarah Chen",
+            "role": "Content Creator",
+            "quote": "Soul Fuse transformed my content creation workflow. I can now create professional videos in minutes instead of hours. Absolutely game-changing!",
+            "image": {
+              "src": "/imgs/avatars/1.png",
+              "alt": "sarah"
+            }
+          },
+          {
+            "name": "Marcus Johnson",
+            "role": "Marketing Manager",
+            "quote": "The quality of videos generated by Soul Fuse is incredible. Our social media engagement increased by 300% after we started using it.",
+            "image": {
+              "src": "/imgs/avatars/2.png",
+              "alt": "marcus"
+            }
+          },
+          {
+            "name": "Emma Rodriguez",
+            "role": "Freelance Videographer",
+            "quote": "As a videographer, I was skeptical at first. But Soul Fuse's AI is so good, I now use it to enhance my workflow and deliver faster to clients.",
+            "image": {
+              "src": "/imgs/avatars/3.png",
+              "alt": "emma"
+            }
+          },
+          {
+            "name": "David Park",
+            "role": "E-commerce Owner",
+            "quote": "Soul Fuse helped me create product videos for my online store without hiring expensive videographers. My conversion rate improved significantly!",
+            "image": {
+              "src": "/imgs/avatars/4.png",
+              "alt": "david"
+            }
+          },
+          {
+            "name": "Lisa Wang",
+            "role": "Social Media Influencer",
+            "quote": "I create 10+ videos per week with Soul Fuse. The variety of styles and quick turnaround time is perfect for keeping my audience engaged.",
+            "image": {
+              "src": "/imgs/avatars/5.png",
+              "alt": "lisa"
+            }
+          },
+          {
+            "name": "James Miller",
+            "role": "Brand Manager",
+            "quote": "Soul Fuse's consistency in video quality is remarkable. We can maintain our brand identity across all our video content effortlessly.",
+            "image": {
+              "src": "/imgs/avatars/6.png",
+              "alt": "james"
+            }
+          }
+        ]
+      },
+      "faq": {
+        "id": "faq",
+        "title": "Frequently Asked Questions About Soul Fuse",
+        "description": "Have another question? Contact us on Discord or by email.",
+        "items": [
+          {
+            "question": "What exactly is Soul Fuse and how does it work?",
+            "answer": "Soul Fuse is an AI-powered video generation platform that transforms your photos into stunning, cinematic videos. Simply upload a photo, choose a style, and our AI creates a beautiful video in seconds."
+          },
+          {
+            "question": "Do I need any video editing experience to use Soul Fuse?",
+            "answer": "No! Soul Fuse is designed to be user-friendly for everyone. You don't need any technical skills or video editing experience. Just upload your photo and let AI do the work."
+          },
+          {
+            "question": "What types of videos can I create with Soul Fuse?",
+            "answer": "Soul Fuse supports multiple video styles including cinematic, travel, action, product showcase, romantic, and many more. Each style is optimized for different use cases and moods."
+          },
+          {
+            "question": "How long does it take to generate a video?",
+            "answer": "Most videos are generated in 30-60 seconds. The exact time depends on the video length and complexity of the style you choose."
+          },
+          {
+            "question": "What video formats and resolutions does Soul Fuse support?",
+            "answer": "Soul Fuse generates videos in 4K resolution (3840x2160) and supports multiple formats including MP4, WebM, and more. Videos are optimized for all major social media platforms."
+          },
+          {
+            "question": "Can I use Soul Fuse videos commercially?",
+            "answer": "Yes! All videos generated with Soul Fuse can be used for commercial purposes. You own the rights to your generated videos and can use them however you like."
+          }
+        ]
+      },
+      "cta": {
+        "id": "cta",
+        "title": "Start Creating Amazing Videos Today",
+        "description": "Join thousands of creators using Soul Fuse to transform their photos into stunning videos.",
+        "buttons": [
+          {
+            "title": "Get Started Free",
+            "url": "/pricing",
+            "target": "_self",
+            "icon": "Zap"
+          },
+          {
+            "title": "View Examples",
+            "url": "/showcases",
+            "target": "_self",
+            "variant": "outline",
+            "icon": "Play"
+          }
+        ],
+        "className": "bg-muted"
+      }
+    }
+  }
+}
