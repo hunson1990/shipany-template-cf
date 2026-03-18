@@ -69,6 +69,7 @@ export enum AITaskStatus {
   SUCCESS = 'success',
   FAILED = 'failed',
   CANCELED = 'canceled',
+  DELETED = 'deleted',
 }
 
 /**

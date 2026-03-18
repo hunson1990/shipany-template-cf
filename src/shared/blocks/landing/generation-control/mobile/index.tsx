@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
-export function GenerationControlMobile() {
+export function GenerationControlMobile({ onGenerationComplete }: { onGenerationComplete?: () => void }) {
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -23,6 +23,7 @@ export function GenerationControlMobile() {
   const [resolution, setResolution] = useState<string>(selectedModel.resolution[0]);
   const [duration, setDuration] = useState<number>(selectedModel.duration[0]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +106,8 @@ export function GenerationControlMobile() {
   const handleCreate = async () => {
     if (!uploadedImage || !prompt.trim()) return;
 
+    setIsCreating(true);
+
     const generationParams = {
       model: selectedModel,
       prompt,
@@ -146,12 +149,16 @@ export function GenerationControlMobile() {
         if (result.code === 0) {
           toast.success('Video generation started');
           console.log('Generation task created:', result.data);
+          // Call the callback to switch to history tab
+          onGenerationComplete?.();
         } else {
           throw new Error(result.message || 'Generation failed');
         }
       } catch (error) {
         console.error('Generation failed:', error);
         toast.error(error instanceof Error ? error.message : 'Generation failed');
+      } finally {
+        setIsCreating(false);
       }
     }
   };
@@ -306,11 +313,11 @@ export function GenerationControlMobile() {
         {/* Create Button */}
         <Button
           onClick={handleCreate}
-          disabled={!uploadedImage || !prompt.trim() || isUploading}
+          disabled={!uploadedImage || !prompt.trim() || isUploading || isCreating}
           className="w-full bg-primary hover:bg-primary/90 text-white h-10"
         >
           <RiMagicLine className="w-4 h-4 mr-2" />
-          {isUploading ? 'Uploading...' : 'Create'}
+          {isCreating ? 'Creating...' : 'Create'}
         </Button>
       </div>
 

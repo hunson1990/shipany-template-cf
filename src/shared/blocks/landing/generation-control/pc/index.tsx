@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 // Convert models object to array
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
-export function GenerationControlPC() {
+export function GenerationControlPC({ onGenerationComplete }: { onGenerationComplete?: () => void }) {
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [videoOptions, setVideoOptions] = useState<VideoOptions>({
@@ -145,6 +145,8 @@ export function GenerationControlPC() {
         if (result.code === 0) {
           toast.success('Video generation started');
           console.log('Generation task created:', result.data);
+          // Call the callback to switch to history tab
+          onGenerationComplete?.();
         } else {
           throw new Error(result.message || 'Generation failed');
         }

@@ -388,7 +388,9 @@ export class KieProvider implements AIProvider {
   }
 
   async queryVideo({ taskId }: { taskId: string }): Promise<AITaskResult> {
-    const apiUrl = `${this.baseUrl}/jobs/recordInfo?taskId=${taskId}`;
+    const apiUrl = `${this.baseUrl}/runway/record-detail?taskId=${taskId}`;
+    console.log('Kie queryVideo apiUrl:', apiUrl);
+
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${this.configs.apiKey}`,
@@ -404,77 +406,78 @@ export class KieProvider implements AIProvider {
 
     const { code, msg, data } = await resp.json();
 
+    // 根据 API 文档，code 200 表示成功
     if (code !== 200) {
-      throw new Error(msg);
+      console.error(`Kie query failed: code=${code}, msg=${msg}, taskId=${taskId}`);
+      throw new Error(msg || 'Query failed');
     }
 
     if (!data || !data.state) {
-      throw new Error(`query failed`);
+      throw new Error('Invalid response: missing data or state');
     }
 
-    let videos: AIVideo[] | undefined = undefined;
-
-    if (data.resultJson) {
-      const resultJson = JSON.parse(data.resultJson);
-      const resultUrls = resultJson.resultUrls;
-      if (Array.isArray(resultUrls)) {
-        videos = resultUrls.map((video: any) => ({
-          id: '',
-          createTime: new Date(data.createTime),
-          videoUrl: video,
-        }));
-      }
+    // 根据 state 字段映射任务状态
+    // wait, queueing, generating -> pending
+    // success -> success
+    // fail -> failed
+    let taskStatus: AITaskStatus;
+    switch (data.state) {
+      case 'wait':
+      case 'queueing':
+      case 'generating':
+        taskStatus = AITaskStatus.PENDING;
+        break;
+      case 'success':
+        taskStatus = AITaskStatus.SUCCESS;
+        break;
+      case 'fail':
+        taskStatus = AITaskStatus.FAILED;
+        break;
+      default:
+        taskStatus = AITaskStatus.PENDING;
     }
 
-    const taskStatus = this.mapImageStatus(data.state);
+    // 构建返回结果
+    const result: AITaskResult = {
+      taskStatus,
+      taskId: data.taskId,
+      taskInfo: {
+        status: data.state,
+        createTime: data.generateTime ? new Date(data.generateTime) : undefined,
+        errorCode: data.failCode?.toString(),
+        errorMessage: data.failMsg,
+      },
+    };
 
-    // use custom storage to save videos
-    if (
-      taskStatus === AITaskStatus.SUCCESS &&
-      videos &&
-      videos.length > 0 &&
-      this.configs.customStorage
-    ) {
-      const filesToSave: AIFile[] = [];
-      videos.forEach((video, index) => {
-        if (video.videoUrl) {
-          filesToSave.push({
-            url: video.videoUrl,
+    // 如果成功，添加视频信息
+    if (taskStatus === AITaskStatus.SUCCESS && data.videoInfo) {
+      result.taskResult = {
+        videoInfo: {
+          videoId: data.videoInfo.videoId,
+          videoUrl: data.videoInfo.videoUrl,
+          imageUrl: data.videoInfo.imageUrl,
+        },
+      };
+
+      // 如果配置了自定义存储，保存视频
+      if (this.configs.customStorage && data.videoInfo.videoUrl) {
+        const filesToSave: AIFile[] = [
+          {
+            url: data.videoInfo.videoUrl,
             contentType: 'video/mp4',
             key: `kie/video/${getUuid()}.mp4`,
-            index: index,
             type: 'video',
-          });
-        }
-      });
+          },
+        ];
 
-      if (filesToSave.length > 0) {
         const uploadedFiles = await saveFiles(filesToSave);
-        if (uploadedFiles) {
-          uploadedFiles.forEach((file: AIFile) => {
-            if (file && file.url && videos && file.index !== undefined) {
-              const video = videos[file.index];
-              if (video) {
-                video.videoUrl = file.url;
-              }
-            }
-          });
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          result.taskResult.videoInfo.videoUrl = uploadedFiles[0].url;
         }
       }
     }
 
-    return {
-      taskId,
-      taskStatus,
-      taskInfo: {
-        videos,
-        status: data.state,
-        errorCode: data.failCode,
-        errorMessage: data.failMsg,
-        createTime: new Date(data.createTime),
-      },
-      taskResult: data,
-    };
+    return result;
   }
 
   // query task

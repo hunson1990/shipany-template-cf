@@ -56,19 +56,19 @@ export async function findAITaskById(id: string) {
 
 export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
   const result = await db().transaction(async (tx: any) => {
-    // task failed, Revoke credit consumption record
+    // 如果任务失败，需要退回已消费的积分
     if (updateAITask.status === AITaskStatus.FAILED && updateAITask.creditId) {
-      // get consumed credit record
+      // 1. 获取该任务消费的积分记录
       const [consumedCredit] = await tx
         .select()
         .from(credit)
         .where(eq(credit.id, updateAITask.creditId));
+
       if (consumedCredit && consumedCredit.status === CreditStatus.ACTIVE) {
+        // 2. 解析消费详情，获取所有被消费的积分项
         const consumedItems = JSON.parse(consumedCredit.consumedDetail || '[]');
 
-        // console.log('consumedItems', consumedItems);
-
-        // add back consumed credits
+        // 3. 将消费的积分加回到用户账户
         await Promise.all(
           consumedItems.map((item: any) => {
             if (item && item.creditId && item.creditsConsumed > 0) {
@@ -82,7 +82,7 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
           })
         );
 
-        // delete consumed credit record
+        // 4. 标记该消费记录为已删除（逻辑删除）
         await tx
           .update(credit)
           .set({
@@ -92,7 +92,7 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
       }
     }
 
-    // update task
+    // 5. 更新任务记录（状态、任务信息、任务结果等）
     const [result] = await tx
       .update(aiTask)
       .set(updateAITask)
@@ -129,6 +129,20 @@ export async function getAITasksCount({
     );
 
   return result?.count || 0;
+}
+
+export async function deleteLogicAITaskById(id: string) {
+  // 逻辑删除：同时设置 deletedAt 和 status 为 deleted
+  const [result] = await db()
+    .update(aiTask)
+    .set({
+      deletedAt: new Date(),
+      status: AITaskStatus.DELETED
+    })
+    .where(eq(aiTask.id, id))
+    .returning();
+
+  return result;
 }
 
 export async function getAITasks({
