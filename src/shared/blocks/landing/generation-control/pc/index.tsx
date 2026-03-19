@@ -10,6 +10,7 @@ import { VideoOptionsSelector, VideoOptions } from '../video-options-selector';
 import ImageEditModal from '../image-edit-modal';
 import { useImageUpload } from '@/shared/context/ImageUploadContext';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
+import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
 import { toast } from 'sonner';
 
@@ -36,6 +37,13 @@ export function GenerationControlPC({
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [costCredits, setCostCredits] = useState<number>(0);
+
+  // Update cost credits when model or video options change
+  useEffect(() => {
+    const newCost = calculateRequiredCredits(selectedModel, videoOptions.resolution, videoOptions.duration);
+    setCostCredits(newCost);
+  }, [selectedModel, videoOptions]);
 
   // Open edit modal when coming from homepage (only on PC)
   useEffect(() => {
@@ -295,7 +303,7 @@ export function GenerationControlPC({
 
               {/* Credits */}
               <div className="text-sm text-muted-foreground px-3">
-                10 Credits
+                {costCredits} Credits
               </div>
 
               {/* Submit Button */}

@@ -9,6 +9,7 @@ import { ModelSelector } from '../model-selector';
 import ImageEditModal from '../image-edit-modal';
 import { useImageUpload } from '@/shared/context/ImageUploadContext';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
+import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
 import { toast } from 'sonner';
 
@@ -31,6 +32,13 @@ export function GenerationControlMobile({
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+  const [costCredits, setCostCredits] = useState<number>(0);
+
+  // Update cost credits when model, resolution, or duration change
+  useEffect(() => {
+    const newCost = calculateRequiredCredits(selectedModel, resolution, duration);
+    setCostCredits(newCost);
+  }, [selectedModel, resolution, duration]);
 
   // Open edit modal when coming from homepage (only on mobile)
   useEffect(() => {
@@ -325,7 +333,7 @@ export function GenerationControlMobile({
             <RiCoinsLine className="w-4 h-4 text-yellow-500" />
             <span className="text-sm text-muted-foreground/90">Credits required:</span>
           </div>
-          <span className="text-sm font-medium text-muted-foreground/90">10 Credits</span>
+          <span className="text-sm font-medium text-muted-foreground/90">{costCredits} Credits</span>
         </div>
 
         {/* Create Button */}

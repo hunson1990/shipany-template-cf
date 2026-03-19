@@ -19,6 +19,7 @@ export interface ModelOption {
   icon?: string;
   resolution: string[];
   duration: number[];
+  aspect_ratio: string[];
   end_frame?: boolean;
   match_rules: MatchRule[];
   decrease_credits: CreditCost[];

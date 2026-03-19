@@ -8,8 +8,9 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     platform: 'kie',
     model_brand: '',
     model_version: '',
-    resolution: ['720p', '1080p'],
+    resolution: ['720p'],
     duration: [5, 8],
+    aspect_ratio: ['16:9', '9:16', '1:1', '4:3', '3:4'],
     end_frame: false,
     match_rules: [
       {
@@ -19,8 +20,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     ],
     decrease_credits: [
       { resolution: '720p', duration: 5, cost_price: 0.06 },
-      { resolution: '720p', duration: 8, cost_price: 0.15 },
-      { resolution: '1080p', duration: 5, cost_price: 0.15 },
+      { resolution: '720p', duration: 8, cost_price: 0.15 }
     ],
     description: 'Multimodal, professional model',
     icon: '/imgs/models/runway.svg',
@@ -33,6 +33,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'pollo-v1-6',
     resolution: ['480p', '720p', '1080p'],
     duration: [5, 10],
+    aspect_ratio: ['16:9', '9:16', '1:1'],
     end_frame: true,
     match_rules: [] as MatchRule[],
     decrease_credits: [
@@ -54,6 +55,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: '',
     resolution: ['1080p'],
     duration: [8],
+    aspect_ratio: ['16:9', '9:16'],
     end_frame: false,
     match_rules: [],
     decrease_credits: [{ resolution: '1080p', duration: 8, cost_price: 0.14 }],
@@ -68,6 +70,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'video-01-live2d',
     resolution: [] as string[],
     duration: [5] as number[],
+    aspect_ratio: ['1:1'] as string[],
     match_rules: [] as MatchRule[],
     decrease_credits: [{ duration: 5, cost_price: 0.42 }],
     description: 'Good for 2D animation',
@@ -81,6 +84,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'minimax-hailuo-02',
     resolution: ['512p', '768p', '1080p'] as string[],
     duration: [6, 10] as number[],
+    aspect_ratio: ['16:9', '9:16', '1:1'] as string[],
     match_rules: [] as MatchRule[],
     decrease_credits: [
       { resolution: '512p', duration: 6, cost_price: 0.12 },
@@ -100,6 +104,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'vidu-q1',
     resolution: ['1080p'] as string[],
     duration: [5] as number[],
+    aspect_ratio: ['16:9', '9:16'] as string[],
     end_frame: true,
     match_rules: [] as MatchRule[],
     decrease_credits: [{ resolution: '1080p', duration: 5, cost_price: 0.48 }],
@@ -114,6 +119,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'vidu-v2-0',
     resolution: ['720p', '1080p'] as string[],
     duration: [4, 8] as number[],
+    aspect_ratio: ['16:9', '9:16', '1:1'] as string[],
     end_frame: true,
     match_rules: [] as MatchRule[],
     decrease_credits: [
@@ -132,6 +138,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'pixverse-v5',
     resolution: ['360p', '540p', '720p', '1080p'] as string[],
     duration: [5, 8] as number[],
+    aspect_ratio: ['16:9', '9:16', '1:1', '4:3'] as string[],
     end_frame: true,
     match_rules: [] as MatchRule[],
     decrease_credits: [
@@ -154,6 +161,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'kling-v2-1',
     resolution: [] as string[],
     duration: [5, 10],
+    aspect_ratio: ['16:9', '9:16', '1:1'] as string[],
     match_rules: [] as MatchRule[],
     decrease_credits: [
       { duration: 5, cost_price: 0.21 },
@@ -170,6 +178,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'wan-v2-2-flash',
     resolution: ['480p', '720p'],
     duration: [5],
+    aspect_ratio: ['16:9', '9:16'],
     match_rules: [] as MatchRule[],
     decrease_credits: [
       { resolution: '480p', duration: 5, cost_price: 0.12 },
@@ -186,6 +195,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     model_version: 'wan-v2-2-plus',
     resolution: ['480p', '1080p'],
     duration: [5],
+    aspect_ratio: ['16:9', '9:16', '1:1'],
     match_rules: [] as MatchRule[],
     decrease_credits: [
       { resolution: '480p', duration: 5, cost_price: 0.24 },

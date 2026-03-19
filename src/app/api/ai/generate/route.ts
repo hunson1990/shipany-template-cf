@@ -6,6 +6,46 @@ import { createAITask, NewAITask } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
+import { ImageToVideoModels } from '@/lib/image-to-video/constants';
+import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
+
+// Calculate cost credits based on model and options
+function calculateCostCredits(
+  mediaType: string,
+  model: string,
+  scene: string,
+  options?: any
+): number {
+  // For image-to-video, calculate based on model's decrease_credits
+  if (mediaType === AIMediaType.VIDEO && scene === 'image-to-video') {
+    const modelConfig = ImageToVideoModels[model];
+    if (modelConfig && options) {
+      const { resolution, duration } = options;
+      return calculateRequiredCredits(modelConfig, resolution, duration);
+    }
+  }
+
+  // Fallback to default costs for other scenarios
+  if (mediaType === AIMediaType.IMAGE) {
+    if (scene === 'image-to-image') {
+      return 4;
+    } else if (scene === 'text-to-image') {
+      return 2;
+    }
+  } else if (mediaType === AIMediaType.VIDEO) {
+    if (scene === 'text-to-video') {
+      return 6;
+    } else if (scene === 'image-to-video') {
+      return 8;
+    } else if (scene === 'video-to-video') {
+      return 10;
+    }
+  } else if (mediaType === AIMediaType.MUSIC) {
+    return 10;
+  }
+
+  return 2; // default
+}
 
 export async function POST(request: Request) {
   try {
@@ -39,36 +79,8 @@ export async function POST(request: Request) {
       throw new Error('no auth, please sign in');
     }
 
-    // todo: get cost credits from settings
-    let costCredits = 2;
-
-    if (mediaType === AIMediaType.IMAGE) {
-      // generate image
-      if (scene === 'image-to-image') {
-        costCredits = 4;
-      } else if (scene === 'text-to-image') {
-        costCredits = 2;
-      } else {
-        throw new Error('invalid scene');
-      }
-    } else if (mediaType === AIMediaType.VIDEO) {
-      // generate video
-      if (scene === 'text-to-video') {
-        costCredits = 6;
-      } else if (scene === 'image-to-video') {
-        costCredits = 8;
-      } else if (scene === 'video-to-video') {
-        costCredits = 10;
-      } else {
-        throw new Error('invalid scene');
-      }
-    } else if (mediaType === AIMediaType.MUSIC) {
-      // generate music
-      costCredits = 10;
-      scene = 'text-to-music';
-    } else {
-      throw new Error('invalid mediaType');
-    }
+    // Calculate cost credits based on model and options
+    const costCredits = calculateCostCredits(mediaType, model, scene, options);
 
     // check credits
     const remainingCredits = await getRemainingCredits(user.id);

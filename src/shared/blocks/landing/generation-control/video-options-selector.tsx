@@ -27,7 +27,9 @@ export function VideoOptionsSelector({
   // Get available options from selected model
   const availableDurations = selectedModel.duration;
   const availableResolutions = selectedModel.resolution;
-  const availableAspectRatios = ['16:9', '9:16']; // Default aspect ratios
+  const availableAspectRatios = selectedModel.aspect_ratio && selectedModel.aspect_ratio.length > 0
+    ? selectedModel.aspect_ratio
+    : ['16:9', '9:16']; // Default aspect ratios
 
   // Auto-adjust selected values if they're not available in the new model
   useEffect(() => {
