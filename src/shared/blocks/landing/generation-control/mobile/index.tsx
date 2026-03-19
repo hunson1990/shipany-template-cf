@@ -64,7 +64,6 @@ export function GenerationControlMobile({
     // Show preview and start uploading
     const previewUrl = URL.createObjectURL(processedFile);
     setImagePreviewUrlState(previewUrl);
-    setUploadedImage(processedFile);
     setIsUploading(true);
 
     try {
@@ -86,6 +85,7 @@ export function GenerationControlMobile({
       }
 
       const uploadedUrl = result.data.urls[0];
+      // 只有上传成功后才设置 uploadedImage，这样生成时才会用远程 URL
       setUploadedImage(processedFile);
       setImagePreviewUrlState(uploadedUrl);
       toast.success('Image uploaded successfully');
@@ -154,7 +154,7 @@ export function GenerationControlMobile({
             options: {
               resolution,
               duration,
-              imageUrl: imagePreviewUrl,
+              imageUrl: imagePreviewUrlState,
             },
           }),
         });
