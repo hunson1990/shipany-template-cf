@@ -25,9 +25,9 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
     description: 'Multimodal, professional model',
     icon: '/imgs/models/runway.svg',
   },
-  'our-own-model-v1-6': {
-    id: 'our-own-model-v1-6',
-    name: 'Our Own Model 1.6',
+  'soul-fuse-v1-6': {
+    id: 'soul-fuse-v1-6',
+    name: 'SoulFuse 1.6',
     platform: 'pollo',
     model_brand: 'pollo',
     model_version: 'pollo-v1-6',

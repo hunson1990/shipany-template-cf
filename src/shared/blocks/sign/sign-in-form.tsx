@@ -18,9 +18,11 @@ import { SocialProviders } from './social-providers';
 export function SignInForm({
   callbackUrl = '/',
   className,
+  onSuccess,
 }: {
   callbackUrl: string;
   className?: string;
+  onSuccess?: () => void;
 }) {
   const t = useTranslations('common.sign');
   const router = useRouter();
@@ -75,7 +77,8 @@ export function SignInForm({
         {
           email,
           password,
-          callbackURL: callbackUrl,
+          // Only use callbackURL if onSuccess is not provided
+          callbackURL: onSuccess ? undefined : callbackUrl,
         },
         {
           onRequest: (ctx) => {
@@ -86,6 +89,10 @@ export function SignInForm({
           },
           onSuccess: (ctx) => {
             // Keep loading=true until navigation completes.
+            // If onSuccess callback is provided, call it instead of navigating
+            if (onSuccess) {
+              onSuccess();
+            }
           },
           onError: (e: any) => {
             const status = e?.error?.status;
@@ -119,6 +126,12 @@ export function SignInForm({
 
   return (
     <div className={`w-full md:max-w-md ${className}`}>
+      {/* Sign-in bonus message */}
+      <div className="mb-4 rounded-lg bg-primary/10 p-3 text-center">
+        <p className="text-sm font-medium text-primary">
+          Sign in and get 12 credits free!
+        </p>
+      </div>
       <div className="grid gap-4">
         {isEmailAuthEnabled && (
           <form
@@ -186,6 +199,7 @@ export function SignInForm({
           callbackUrl={callbackUrl || '/'}
           loading={loading}
           setLoading={setLoading}
+          onSuccess={onSuccess}
         />
       </div>
       {isEmailAuthEnabled && (

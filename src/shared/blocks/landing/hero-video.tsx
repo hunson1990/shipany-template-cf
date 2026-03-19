@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { ImageIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -212,14 +213,14 @@ export function HeroVideo({
                               />
                               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <div className="text-center">
-                                  <div className="text-2xl">+</div>
+                                  <ImageIcon className="w-6 h-6 mx-auto text-white" />
                                   <div className="text-xs text-gray-300 mt-1">Change</div>
                                 </div>
                               </div>
                             </>
                           ) : (
                             <div className="text-center">
-                              <div className="text-2xl">+</div>
+                              <ImageIcon className="w-6 h-6 mx-auto text-gray-400" />
                               <div className="text-xs text-gray-400 mt-1">Upload</div>
                             </div>
                           )}

@@ -9,6 +9,7 @@ import { ModelSelector } from '../model-selector';
 import { VideoOptionsSelector, VideoOptions } from '../video-options-selector';
 import ImageEditModal from '../image-edit-modal';
 import { useImageUpload } from '@/shared/context/ImageUploadContext';
+import { useAppContext } from '@/shared/contexts/app';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
@@ -23,6 +24,7 @@ export function GenerationControlPC({
   onGenerationComplete?: () => void;
 }) {
   const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
+  const { user, setIsShowSignModal } = useAppContext();
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [videoOptions, setVideoOptions] = useState<VideoOptions>({
@@ -130,6 +132,12 @@ export function GenerationControlPC({
   };
 
   const handleSubmit = async () => {
+    // Check if user is logged in
+    if (!user) {
+      setIsShowSignModal(true);
+      return;
+    }
+
     if (!prompt.trim() || !uploadedImage) return;
 
     setIsCreating(true);

@@ -30,6 +30,11 @@ export function SignModal({ callbackUrl = '/' }: { callbackUrl?: string }) {
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
+  const handleSignInSuccess = () => {
+    // Close the modal after successful sign in
+    setIsShowSignModal(false);
+  };
+
   if (isDesktop) {
     return (
       <Dialog open={isShowSignModal} onOpenChange={setIsShowSignModal}>
@@ -38,7 +43,7 @@ export function SignModal({ callbackUrl = '/' }: { callbackUrl?: string }) {
             <DialogTitle>{t('sign_in_title')}</DialogTitle>
             <DialogDescription>{t('sign_in_description')}</DialogDescription>
           </DialogHeader>
-          <SignInForm callbackUrl={callbackUrl} />
+          <SignInForm callbackUrl={callbackUrl} onSuccess={handleSignInSuccess} />
         </DialogContent>
       </Dialog>
     );
@@ -51,7 +56,7 @@ export function SignModal({ callbackUrl = '/' }: { callbackUrl?: string }) {
           <DrawerTitle>{t('sign_in_title')}</DrawerTitle>
           <DrawerDescription>{t('sign_in_description')}</DrawerDescription>
         </DrawerHeader>
-        <SignInForm callbackUrl={callbackUrl} className="mt-8 px-4" />
+        <SignInForm callbackUrl={callbackUrl} className="mt-8 px-4" onSuccess={handleSignInSuccess} />
         <DrawerFooter className="pt-4">
           <DrawerClose asChild>
             <Button variant="outline">{t('cancel_title')}</Button>

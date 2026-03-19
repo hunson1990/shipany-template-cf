@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/compo
 import { ModelSelector } from '../model-selector';
 import ImageEditModal from '../image-edit-modal';
 import { useImageUpload } from '@/shared/context/ImageUploadContext';
+import { useAppContext } from '@/shared/contexts/app';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
@@ -21,6 +22,7 @@ export function GenerationControlMobile({
   onGenerationComplete?: () => void;
 }) {
   const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
+  const { user, setIsShowSignModal } = useAppContext();
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
@@ -130,6 +132,12 @@ export function GenerationControlMobile({
   };
 
   const handleCreate = async () => {
+    // Check if user is logged in
+    if (!user) {
+      setIsShowSignModal(true);
+      return;
+    }
+
     if (!uploadedImage || !prompt.trim()) return;
 
     setIsCreating(true);

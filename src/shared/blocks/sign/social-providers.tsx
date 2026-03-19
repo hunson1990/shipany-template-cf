@@ -17,11 +17,13 @@ export function SocialProviders({
   callbackUrl,
   loading,
   setLoading,
+  onSuccess,
 }: {
   configs: Record<string, string>;
   callbackUrl: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  onSuccess?: () => void;
 }) {
   const t = useTranslations('common.sign');
   const router = useRouter();
@@ -43,7 +45,8 @@ export function SocialProviders({
     await signIn.social(
       {
         provider: provider,
-        callbackURL: callbackUrl,
+        // Only use callbackURL if onSuccess is not provided
+        callbackURL: onSuccess ? undefined : callbackUrl,
       },
       {
         onRequest: (ctx) => {
@@ -53,8 +56,13 @@ export function SocialProviders({
           // Do NOT reset loading here; navigation may not have completed yet.
         },
         onSuccess: (ctx) => {
-          // Close modal if any; navigation will proceed.
-          setIsShowSignModal(false);
+          // If onSuccess callback is provided, call it instead of navigating
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // Close modal if any; navigation will proceed.
+            setIsShowSignModal(false);
+          }
         },
         onError: (e: any) => {
           toast.error(e?.error?.message || 'sign in failed');
