@@ -32,28 +32,13 @@ interface AppContentProps {
 
 export function AppContent({ mockVideos }: AppContentProps) {
   const searchParams = useSearchParams();
-  const { imageFile, imagePreviewUrl } = useImageUpload();
-  const isDesktopQuery = useMediaQuery('(min-width: 1024px)');
-  const isDesktop = isDesktopQuery === true;
+  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt } = useImageUpload();
   const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
   const [tasks, setTasks] = useState<AITask[]>([]);
   const [loading, setLoading] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const pollingIdsRef = useRef<Set<string>>(new Set());
-
-  // Get initial data from Context and sessionStorage
-  const initialPrompt = typeof window !== 'undefined' ? sessionStorage.getItem('initialPrompt') || '' : '';
-  const shouldEditImageFromStorage = typeof window !== 'undefined' ? sessionStorage.getItem('shouldEditImage') === 'true' : false;
-  const shouldEditImage = shouldEditImageFromStorage && !!imageFile && !!imagePreviewUrl;
-
-  // Clear sessionStorage after reading
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('initialPrompt');
-      sessionStorage.removeItem('shouldEditImage');
-    }
-  }, []);
 
   // Fetch tasks from API
   const fetchTasks = useCallback(async () => {
@@ -173,79 +158,65 @@ export function AppContent({ mockVideos }: AppContentProps) {
   return (
     <>
       {/* Desktop Layout (>= 1024px) */}
-      {isDesktop && (
-        <div className="min-h-screen bg-background pb-48">
-          {/* Desktop Layout */}
-          <div className="mx-auto max-w-6xl p-8">
-            <div className="p-6">
+      <div className="hidden lg:block min-h-screen bg-background pb-48">
+        <div className="mx-auto max-w-6xl p-8">
+          <div className="p-6">
+            <GenerationHistory
+              tasks={tasks}
+              loading={loading}
+              onDeleteTask={handleDeleteTask}
+            />
+          </div>
+        </div>
+        <GenerationControlPC
+          onGenerationComplete={handleGenerationComplete}
+        />
+      </div>
+
+      {/* Mobile Layout (< 1024px) */}
+      <div className="lg:hidden min-h-screen bg-background flex flex-col">
+        {/* Tab Navigation - Fixed below header */}
+        <div className="fixed top-14 left-0 right-0 flex bg-muted z-40">
+          <button
+            onClick={() => handleTabChange('create')}
+            className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
+              activeTab === 'create'
+                ? 'text-foreground border-primary bg-white/10'
+                : 'text-muted-foreground border-transparent'
+            }`}
+          >
+            Create
+          </button>
+          <button
+            onClick={() => handleTabChange('history')}
+            className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
+              activeTab === 'history'
+                ? 'text-foreground border-primary bg-white/10'
+                : 'text-muted-foreground border-transparent'
+            }`}
+          >
+            History
+          </button>
+        </div>
+
+        {/* Tab Content - Add margin top to account for fixed tab */}
+        <div className="flex-1 overflow-y-auto mt-12">
+          {activeTab === 'create' && (
+            <GenerationControlMobile
+              onGenerationComplete={handleGenerationComplete}
+            />
+          )}
+          {activeTab === 'history' && (
+            <div className="p-4">
               <GenerationHistory
                 tasks={tasks}
                 loading={loading}
                 onDeleteTask={handleDeleteTask}
               />
             </div>
-          </div>
-          <GenerationControlPC
-            onGenerationComplete={handleGenerationComplete}
-            initialPrompt={initialPrompt}
-            initialImageFile={imageFile}
-            initialImageUrl={imagePreviewUrl || ''}
-            shouldEditImage={shouldEditImage}
-          />
+          )}
         </div>
-      )}
-
-      {/* Mobile Layout (< 1024px) */}
-      {!isDesktop && (
-        <div className="min-h-screen bg-background flex flex-col">
-          {/* Mobile Layout */}
-          {/* Tab Navigation - Fixed below header */}
-          <div className="fixed top-14 left-0 right-0 flex bg-muted z-40">
-            <button
-              onClick={() => handleTabChange('create')}
-              className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
-                activeTab === 'create'
-                  ? 'text-foreground border-primary bg-white/10'
-                  : 'text-muted-foreground border-transparent'
-              }`}
-            >
-              Create
-            </button>
-            <button
-              onClick={() => handleTabChange('history')}
-              className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
-                activeTab === 'history'
-                  ? 'text-foreground border-primary bg-white/10'
-                  : 'text-muted-foreground border-transparent'
-              }`}
-            >
-              History
-            </button>
-          </div>
-
-          {/* Tab Content - Add margin top to account for fixed tab */}
-          <div className="flex-1 overflow-y-auto mt-12">
-            {activeTab === 'create' && (
-              <GenerationControlMobile
-                onGenerationComplete={handleGenerationComplete}
-                initialPrompt={initialPrompt}
-                initialImageFile={imageFile}
-                initialImageUrl={imagePreviewUrl || ''}
-                shouldEditImage={shouldEditImage}
-              />
-            )}
-            {activeTab === 'history' && (
-              <div className="p-4">
-                <GenerationHistory
-                  tasks={tasks}
-                  loading={loading}
-                  onDeleteTask={handleDeleteTask}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      </div>
     </>
   );
 }

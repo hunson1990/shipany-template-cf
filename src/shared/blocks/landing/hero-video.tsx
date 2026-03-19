@@ -68,7 +68,7 @@ export function HeroVideo({
   ctaText = 'Generate',
 }: HeroVideoProps) {
   const router = useRouter();
-  const { setImageData } = useImageUpload();
+  const { setImageData, openEditModal } = useImageUpload();
   const [selectedHint, setSelectedHint] = useState<string | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -88,12 +88,13 @@ export function HeroVideo({
       return;
     }
 
-    // Store image data in Context
-    setImageData(selectedFile, imagePreviewUrl);
+    // Determine device type
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+    const device = isDesktop ? 'pc' : 'mobile';
 
-    // Store prompt in sessionStorage for retrieval
-    sessionStorage.setItem('initialPrompt', data.prompt);
-    sessionStorage.setItem('shouldEditImage', 'true');
+    // Store image data and open edit modal
+    setImageData(selectedFile, imagePreviewUrl);
+    openEditModal(data.prompt, device);
 
     // Navigate to /app
     router.push(`/app`);

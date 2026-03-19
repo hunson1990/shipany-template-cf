@@ -5,8 +5,13 @@ import React, { createContext, useContext, useState } from 'react';
 interface ImageUploadContextType {
   imageFile: File | null;
   imagePreviewUrl: string | null;
+  shouldOpenEditModal: boolean;
+  initialPrompt: string;
+  deviceType: 'pc' | 'mobile' | null;
   setImageData: (file: File | null, previewUrl: string | null) => void;
   clearImageData: () => void;
+  openEditModal: (prompt: string, device: 'pc' | 'mobile') => void;
+  closeEditModal: () => void;
 }
 
 const ImageUploadContext = createContext<ImageUploadContextType | undefined>(undefined);
@@ -14,6 +19,9 @@ const ImageUploadContext = createContext<ImageUploadContextType | undefined>(und
 export function ImageUploadProvider({ children }: { children: React.ReactNode }) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [shouldOpenEditModal, setShouldOpenEditModal] = useState(false);
+  const [initialPrompt, setInitialPromptState] = useState('');
+  const [deviceType, setDeviceType] = useState<'pc' | 'mobile' | null>(null);
 
   const setImageData = (file: File | null, previewUrl: string | null) => {
     setImageFile(file);
@@ -28,8 +36,31 @@ export function ImageUploadProvider({ children }: { children: React.ReactNode })
     setImagePreviewUrl(null);
   };
 
+  const openEditModal = (prompt: string, device: 'pc' | 'mobile') => {
+    setInitialPromptState(prompt);
+    setDeviceType(device);
+    setShouldOpenEditModal(true);
+  };
+
+  const closeEditModal = () => {
+    setShouldOpenEditModal(false);
+    setDeviceType(null);
+  };
+
   return (
-    <ImageUploadContext.Provider value={{ imageFile, imagePreviewUrl, setImageData, clearImageData }}>
+    <ImageUploadContext.Provider
+      value={{
+        imageFile,
+        imagePreviewUrl,
+        shouldOpenEditModal,
+        initialPrompt,
+        deviceType,
+        setImageData,
+        clearImageData,
+        openEditModal,
+        closeEditModal,
+      }}
+    >
       {children}
     </ImageUploadContext.Provider>
   );

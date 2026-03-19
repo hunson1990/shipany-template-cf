@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { RiImageAddLine, RiMagicLine, RiCoinsLine } from 'react-icons/ri';
 import { ZoomIn, Trash2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
 import { ModelSelector } from '../model-selector';
 import ImageEditModal from '../image-edit-modal';
+import { useImageUpload } from '@/shared/context/ImageUploadContext';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import type { ModelOption } from '@/types/image-to-video';
 import { toast } from 'sonner';
@@ -15,28 +16,30 @@ const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
 export function GenerationControlMobile({
   onGenerationComplete,
-  initialPrompt = '',
-  initialImageFile = null,
-  initialImageUrl = '',
-  shouldEditImage = false,
 }: {
   onGenerationComplete?: () => void;
-  initialPrompt?: string;
-  initialImageFile?: File | null;
-  initialImageUrl?: string;
-  shouldEditImage?: boolean;
 }) {
+  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
-  const [prompt, setPrompt] = useState(initialPrompt);
+  const [prompt, setPrompt] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(shouldEditImage && !!initialImageFile && !!initialImageUrl);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(initialImageFile);
+  const [imagePreviewUrlState, setImagePreviewUrlState] = useState<string>('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [resolution, setResolution] = useState<string>(selectedModel.resolution[0]);
   const [duration, setDuration] = useState<number>(selectedModel.duration[0]);
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Open edit modal when coming from homepage (only on mobile)
+  useEffect(() => {
+    if (shouldOpenEditModal && deviceType === 'mobile' && imageFile && imagePreviewUrl) {
+      setIsEditModalOpen(true);
+      setPendingImageFile(imageFile);
+      setPrompt(initialPrompt);
+    }
+  }, [shouldOpenEditModal, deviceType, imageFile, imagePreviewUrl, initialPrompt]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,11 +58,12 @@ export function GenerationControlMobile({
   const handleEditConfirm = async (processedFile: File) => {
     // Close modal immediately
     setIsEditModalOpen(false);
+    closeEditModal();
     setPendingImageFile(null);
 
     // Show preview and start uploading
     const previewUrl = URL.createObjectURL(processedFile);
-    setImagePreviewUrl(previewUrl);
+    setImagePreviewUrlState(previewUrl);
     setUploadedImage(processedFile);
     setIsUploading(true);
 
@@ -83,14 +87,14 @@ export function GenerationControlMobile({
 
       const uploadedUrl = result.data.urls[0];
       setUploadedImage(processedFile);
-      setImagePreviewUrl(uploadedUrl);
+      setImagePreviewUrlState(uploadedUrl);
       toast.success('Image uploaded successfully');
       console.log('Processed image uploaded:', uploadedUrl);
     } catch (error) {
       console.error('Upload failed:', error);
       toast.error(error instanceof Error ? error.message : 'Upload failed');
       // Reset on error
-      setImagePreviewUrl('');
+      setImagePreviewUrlState('');
       setUploadedImage(null);
     } finally {
       setIsUploading(false);
@@ -106,13 +110,13 @@ export function GenerationControlMobile({
     e.preventDefault();
     e.stopPropagation();
     setUploadedImage(null);
-    setImagePreviewUrl('');
+    setImagePreviewUrlState('');
   };
 
   const handleImagePreview = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (imagePreviewUrl) {
+    if (imagePreviewUrlState) {
       setShowImagePreview(true);
     }
   };
@@ -196,7 +200,7 @@ export function GenerationControlMobile({
           <label className="text-sm font-medium block mb-1">Image</label>
           <div
             className="border-2 border-dashed border-muted-foreground/30 rounded-lg text-center hover:border-primary/50 transition-colors cursor-pointer relative overflow-hidden w-full h-40 bg-muted/10"
-            onClick={() => !isUploading && !imagePreviewUrl && document.getElementById('image-input-mobile')?.click()}
+            onClick={() => !isUploading && !imagePreviewUrlState && document.getElementById('image-input-mobile')?.click()}
           >
             {isUploading && (
               <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
@@ -205,10 +209,10 @@ export function GenerationControlMobile({
               </div>
             )}
 
-            {imagePreviewUrl ? (
+            {imagePreviewUrlState ? (
               <div className="relative w-full h-full group">
                 <img
-                  src={imagePreviewUrl}
+                  src={imagePreviewUrlState}
                   alt="Uploaded"
                   className="w-full h-full object-contain"
                 />
@@ -352,7 +356,7 @@ export function GenerationControlMobile({
           </DialogHeader>
           <div className="flex items-center justify-center max-h-[80vh]">
             <img
-              src={imagePreviewUrl}
+              src={imagePreviewUrlState}
               alt="Image preview"
               className="max-w-full max-h-full object-contain rounded-md"
             />

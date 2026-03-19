@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/shared/components/ui/button';
 import { RiImageAddLine, RiArrowUpLine } from 'react-icons/ri';
 import { ZoomIn, Trash2, Loader2 } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/compo
 import { ModelSelector } from '../model-selector';
 import { VideoOptionsSelector, VideoOptions } from '../video-options-selector';
 import ImageEditModal from '../image-edit-modal';
+import { useImageUpload } from '@/shared/context/ImageUploadContext';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import type { ModelOption } from '@/types/image-to-video';
 import { toast } from 'sonner';
@@ -17,18 +18,11 @@ const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
 export function GenerationControlPC({
   onGenerationComplete,
-  initialPrompt = '',
-  initialImageFile = null,
-  initialImageUrl = '',
-  shouldEditImage = false,
 }: {
   onGenerationComplete?: () => void;
-  initialPrompt?: string;
-  initialImageFile?: File | null;
-  initialImageUrl?: string;
-  shouldEditImage?: boolean;
 }) {
-  const [prompt, setPrompt] = useState(initialPrompt);
+  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
+  const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [videoOptions, setVideoOptions] = useState<VideoOptions>({
     duration: 4,
@@ -36,12 +30,21 @@ export function GenerationControlPC({
     aspectRatio: '16:9',
   });
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(shouldEditImage && !!initialImageFile && !!initialImageUrl);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(initialImageFile);
+  const [imagePreviewUrlState, setImagePreviewUrlState] = useState<string>('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
+
+  // Open edit modal when coming from homepage (only on PC)
+  useEffect(() => {
+    if (shouldOpenEditModal && deviceType === 'pc' && imageFile && imagePreviewUrl) {
+      setIsEditModalOpen(true);
+      setPendingImageFile(imageFile);
+      setPrompt(initialPrompt);
+    }
+  }, [shouldOpenEditModal, deviceType, imageFile, imagePreviewUrl, initialPrompt]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,11 +57,12 @@ export function GenerationControlPC({
   const handleEditConfirm = async (processedFile: File) => {
     // Close modal immediately
     setIsEditModalOpen(false);
+    closeEditModal();
     setPendingImageFile(null);
 
     // Show preview and start uploading
     const previewUrl = URL.createObjectURL(processedFile);
-    setImagePreviewUrl(previewUrl);
+    setImagePreviewUrlState(previewUrl);
     setUploadedImage(processedFile);
     setIsUploading(true);
 
@@ -82,14 +86,14 @@ export function GenerationControlPC({
 
       const uploadedUrl = result.data.urls[0];
       setUploadedImage(processedFile);
-      setImagePreviewUrl(uploadedUrl);
+      setImagePreviewUrlState(uploadedUrl);
       toast.success('Image uploaded successfully');
       console.log('Processed image uploaded:', uploadedUrl);
     } catch (error) {
       console.error('Upload failed:', error);
       toast.error(error instanceof Error ? error.message : 'Upload failed');
       // Reset on error
-      setImagePreviewUrl('');
+      setImagePreviewUrlState('');
       setUploadedImage(null);
     } finally {
       setIsUploading(false);
@@ -98,6 +102,7 @@ export function GenerationControlPC({
 
   const handleEditClose = () => {
     setIsEditModalOpen(false);
+    closeEditModal();
     setPendingImageFile(null);
   };
 
@@ -105,13 +110,13 @@ export function GenerationControlPC({
     e.preventDefault();
     e.stopPropagation();
     setUploadedImage(null);
-    setImagePreviewUrl('');
+    setImagePreviewUrlState('');
   };
 
   const handleImagePreview = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (imagePreviewUrl) {
+    if (imagePreviewUrlState) {
       setShowImagePreview(true);
     }
   };
@@ -125,7 +130,7 @@ export function GenerationControlPC({
       model: selectedModel,
       prompt,
       image: uploadedImage,
-      imageUrl: imagePreviewUrl,
+      imageUrl: imagePreviewUrlState,
       videoOptions,
     };
 
@@ -149,7 +154,7 @@ export function GenerationControlPC({
               resolution: videoOptions.resolution,
               duration: videoOptions.duration,
               aspectRatio: videoOptions.aspectRatio,
-              imageUrl: imagePreviewUrl,
+              imageUrl: imagePreviewUrlState,
             },
           }),
         });
@@ -186,7 +191,7 @@ export function GenerationControlPC({
               {/* Image Upload Button */}
               <div
                 className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center hover:border-primary/50 transition-colors cursor-pointer relative overflow-hidden bg-muted/10 group"
-                onClick={() => !isUploading && !imagePreviewUrl && document.getElementById('image-input-pc')?.click()}
+                onClick={() => !isUploading && !imagePreviewUrlState && document.getElementById('image-input-pc')?.click()}
               >
                 {isUploading && (
                   <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
@@ -194,10 +199,10 @@ export function GenerationControlPC({
                   </div>
                 )}
 
-                {imagePreviewUrl ? (
+                {imagePreviewUrlState ? (
                   <div className="relative w-full h-full">
                     <img
-                      src={imagePreviewUrl}
+                      src={imagePreviewUrlState}
                       alt="Uploaded"
                       className="w-full h-full object-contain"
                     />
@@ -315,7 +320,7 @@ export function GenerationControlPC({
       <ImageEditModal
         isOpen={isEditModalOpen}
         imageFile={pendingImageFile}
-        existingImageUrl={pendingImageFile ? undefined : imagePreviewUrl}
+        existingImageUrl={pendingImageFile ? undefined : imagePreviewUrlState}
         onClose={handleEditClose}
         onConfirm={handleEditConfirm}
       />
@@ -328,7 +333,7 @@ export function GenerationControlPC({
           </DialogHeader>
           <div className="flex items-center justify-center max-h-[80vh]">
             <img
-              src={imagePreviewUrl}
+              src={imagePreviewUrlState}
               alt="Image preview"
               className="max-w-full max-h-full object-contain rounded-md"
             />
