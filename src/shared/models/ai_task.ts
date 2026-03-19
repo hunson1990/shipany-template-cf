@@ -54,6 +54,11 @@ export async function findAITaskById(id: string) {
   return result;
 }
 
+export async function findAITaskByTaskId(taskId: string) {
+  const [result] = await db().select().from(aiTask).where(eq(aiTask.taskId, taskId));
+  return result;
+}
+
 export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
   const result = await db().transaction(async (tx: any) => {
     // 如果任务失败，需要退回已消费的积分

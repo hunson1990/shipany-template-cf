@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from '@/core/i18n/navigation';
 import {
   CreditCard,
   Download,
@@ -208,6 +209,7 @@ export function VideoGenerator({
   srOnlyTitle,
 }: VideoGeneratorProps) {
   const t = useTranslations('ai.video.generator');
+  const router = useRouter();
 
   const [activeTab, setActiveTab] =
     useState<VideoGeneratorTab>('text-to-video');
@@ -218,8 +220,32 @@ export function VideoGenerator({
   const [prompt, setPrompt] = useState('');
   const [referenceImageItems, setReferenceImageItems] = useState<
     ImageUploaderValue[]
-  >([]);
-  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>([]);
+  >(() => {
+    // Check for image URL in query params on initial render
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const imageUrl = params.get('imageUrl');
+      if (imageUrl) {
+        return [{
+          id: `preset-${imageUrl}`,
+          preview: imageUrl,
+          url: imageUrl,
+          status: 'uploaded',
+        }];
+      }
+    }
+    return [];
+  });
+  const [referenceImageUrls, setReferenceImageUrls] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const imageUrl = params.get('imageUrl');
+      if (imageUrl) {
+        return [imageUrl];
+      }
+    }
+    return [];
+  });
   const [referenceVideoUrl, setReferenceVideoUrl] = useState<string>('');
   const [generatedVideos, setGeneratedVideos] = useState<GeneratedVideo[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -233,6 +259,16 @@ export function VideoGenerator({
     null
   );
   const [isMounted, setIsMounted] = useState(false);
+  const [defaultImagePreviews, setDefaultImagePreviews] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const imageUrl = params.get('imageUrl');
+      if (imageUrl) {
+        return [imageUrl];
+      }
+    }
+    return [];
+  });
 
   const { user, isCheckSign, setIsShowSignModal, fetchUserCredits } =
     useAppContext();
@@ -507,6 +543,19 @@ export function VideoGenerator({
       return;
     }
 
+    // For image-to-video mode, navigate to /app with data
+    if (isImageToVideoMode) {
+      const params = new URLSearchParams({
+        prompt: trimmedPrompt,
+        imageUrl: referenceImageUrls[0] || '',
+        mode: 'image-to-video',
+        editImage: 'true', // Auto-open image edit modal
+      });
+      router.push(`/app?${params.toString()}`);
+      return;
+    }
+
+    // For other modes, use the existing generation flow
     setIsGenerating(true);
     setProgress(15);
     setTaskStatus(AITaskStatus.PENDING);
@@ -515,10 +564,6 @@ export function VideoGenerator({
 
     try {
       const options: any = {};
-
-      if (isImageToVideoMode) {
-        options.image_input = referenceImageUrls;
-      }
 
       if (isVideoToVideoMode) {
         options.video_input = [referenceVideoUrl];
@@ -696,6 +741,7 @@ export function VideoGenerator({
                       maxSizeMB={maxSizeMB}
                       onChange={handleReferenceImagesChange}
                       emptyHint={t('form.reference_image_placeholder')}
+                      defaultPreviews={defaultImagePreviews}
                     />
 
                     {hasReferenceUploadError && (

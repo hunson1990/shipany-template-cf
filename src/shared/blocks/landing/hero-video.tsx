@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from '@/core/i18n/navigation';
+import { useImageUpload } from '@/shared/context/ImageUploadContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,6 +21,7 @@ import {
   FormField,
   FormItem,
 } from '@/shared/components/ui/form';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   prompt: z.string().min(1, 'Please enter your idea'),
@@ -62,9 +65,13 @@ export function HeroVideo({
     { id: 'travel', label: 'Travel Aerial Narrative', icon: '✈️' },
     { id: 'action', label: 'Action/Sports', icon: '⚡' },
   ],
-  ctaText = 'Generate for free',
+  ctaText = 'Generate',
 }: HeroVideoProps) {
+  const router = useRouter();
+  const { setImageData } = useImageUpload();
   const [selectedHint, setSelectedHint] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -76,11 +83,34 @@ export function HeroVideo({
   });
 
   const handleSubmit = (data: FormValues) => {
-    onSubmit?.(data);
+    if (!imagePreviewUrl || !selectedFile) {
+      toast.error('Please upload an image first');
+      return;
+    }
+
+    // Store image data in Context
+    setImageData(selectedFile, imagePreviewUrl);
+
+    // Store prompt in sessionStorage for retrieval
+    sessionStorage.setItem('initialPrompt', data.prompt);
+    sessionStorage.setItem('shouldEditImage', 'true');
+
+    // Navigate to /app
+    router.push(`/app`);
   };
 
   const handleHintClick = (hintId: string) => {
     setSelectedHint(hintId);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create local preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+    setSelectedFile(file);
   };
 
   return (
@@ -171,20 +201,33 @@ export function HeroVideo({
                     <FormControl>
                       <div className="flex gap-3">
                         {/* Image Upload */}
-                        <label className="flex h-full min-h-24 w-24 flex-shrink-0 cursor-pointer items-center justify-center rounded border-2 border-dashed border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors">
+                        <label className="flex h-full min-h-24 w-24 flex-shrink-0 cursor-pointer items-center justify-center rounded border-2 border-dashed border-primary/50 hover:border-primary hover:bg-primary/5 transition-colors overflow-hidden relative group">
+                          {imagePreviewUrl ? (
+                            <>
+                              <img
+                                src={imagePreviewUrl}
+                                alt="Uploaded"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="text-2xl">+</div>
+                                  <div className="text-xs text-gray-300 mt-1">Change</div>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center">
+                              <div className="text-2xl">+</div>
+                              <div className="text-xs text-gray-400 mt-1">Upload</div>
+                            </div>
+                          )}
                           <input
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) => {
-                              // Handle image upload
-                              console.log(e.target.files?.[0]);
-                            }}
+                            onChange={handleImageUpload}
                           />
-                          <div className="text-center">
-                            <div className="text-2xl">+</div>
-                            <div className="text-xs text-gray-400 mt-1">Upload</div>
-                          </div>
                         </label>
 
                         {/* Textarea */}

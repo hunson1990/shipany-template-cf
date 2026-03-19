@@ -15,8 +15,20 @@ import { toast } from 'sonner';
 // Convert models object to array
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
-export function GenerationControlPC({ onGenerationComplete }: { onGenerationComplete?: () => void }) {
-  const [prompt, setPrompt] = useState('');
+export function GenerationControlPC({
+  onGenerationComplete,
+  initialPrompt = '',
+  initialImageFile = null,
+  initialImageUrl = '',
+  shouldEditImage = false,
+}: {
+  onGenerationComplete?: () => void;
+  initialPrompt?: string;
+  initialImageFile?: File | null;
+  initialImageUrl?: string;
+  shouldEditImage?: boolean;
+}) {
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [videoOptions, setVideoOptions] = useState<VideoOptions>({
     duration: 4,
@@ -25,9 +37,10 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
   });
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(shouldEditImage && !!initialImageFile && !!initialImageUrl);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(initialImageFile);
   const [isUploading, setIsUploading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [showImagePreview, setShowImagePreview] = useState(false);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +57,9 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
     setPendingImageFile(null);
 
     // Show preview and start uploading
-    setImagePreviewUrl(URL.createObjectURL(processedFile));
+    const previewUrl = URL.createObjectURL(processedFile);
+    setImagePreviewUrl(previewUrl);
+    setUploadedImage(processedFile);
     setIsUploading(true);
 
     try {
@@ -104,6 +119,8 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
   const handleSubmit = async () => {
     if (!prompt.trim() || !uploadedImage) return;
 
+    setIsCreating(true);
+
     const generationParams = {
       model: selectedModel,
       prompt,
@@ -153,6 +170,8 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
       } catch (error) {
         console.error('Generation failed:', error);
         toast.error(error instanceof Error ? error.message : 'Generation failed');
+      } finally {
+        setIsCreating(false);
       }
     }
   };
@@ -279,9 +298,13 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
                 size="sm"
                 className="bg-primary hover:bg-primary/90 text-white h-9 w-9 p-0"
                 onClick={handleSubmit}
-                disabled={!prompt.trim() || !uploadedImage || isUploading}
+                disabled={!prompt.trim() || !uploadedImage || isUploading || isCreating}
               >
-                <RiArrowUpLine className="w-5 h-5" />
+                {isCreating ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <RiArrowUpLine className="w-5 h-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -292,6 +315,7 @@ export function GenerationControlPC({ onGenerationComplete }: { onGenerationComp
       <ImageEditModal
         isOpen={isEditModalOpen}
         imageFile={pendingImageFile}
+        existingImageUrl={pendingImageFile ? undefined : imagePreviewUrl}
         onClose={handleEditClose}
         onConfirm={handleEditConfirm}
       />

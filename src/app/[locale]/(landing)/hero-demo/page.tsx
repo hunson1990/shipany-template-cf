@@ -42,7 +42,7 @@ export default function HeroVideoDemo() {
         { id: 'travel', label: 'Travel Aerial Narrative', icon: '✈️' },
         { id: 'action', label: 'Action/Sports', icon: '⚡' },
       ]}
-      ctaText="Generate for free"
+      ctaText="Generate"
     />
   );
 }

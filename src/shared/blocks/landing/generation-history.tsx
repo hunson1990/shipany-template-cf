@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/shared/components/ui/button';
 import { RiDownloadLine, RiDeleteBin6Line } from 'react-icons/ri';
@@ -39,117 +39,14 @@ interface GeneratedVideo {
 }
 
 interface GenerationHistoryProps {
-  videos?: GeneratedVideo[];
-  isLoading?: boolean;
+  tasks?: AITask[];
+  loading?: boolean;
+  onDeleteTask?: (taskId: string) => void;
 }
 
-export function GenerationHistory({ videos = [], isLoading = false }: GenerationHistoryProps) {
-  const [tasks, setTasks] = useState<AITask[]>([]);
-  const [loading, setLoading] = useState(true);
+export function GenerationHistory({ tasks = [], loading = false, onDeleteTask }: GenerationHistoryProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  console.log('GenerationHistory mounted/rendered');
-
-  // Fetch tasks from API
-  const fetchTasks = async () => {
-    console.log('fetchTasks called');
-    try {
-      const response = await fetch('/api/ai/tasks');
-      if (!response.ok) throw new Error('Failed to fetch tasks');
-      const result = await response.json();
-      if (result.code === 0 && result.data) {
-        setTasks(result.data);
-
-        // Find pending tasks that need polling
-        const pendingTasks = result.data.filter((task: AITask) => task.status === 'pending');
-        setPollingIds(new Set(pendingTasks.map((task: AITask) => task.id)));
-      }
-    } catch (error) {
-      console.error('Failed to fetch tasks:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Query batch tasks to get latest status
-  const queryBatchTasks = useCallback(async (taskIds: string[]) => {
-    if (taskIds.length === 0) return;
-
-    console.log('queryBatchTasks called with taskIds:', taskIds, 'at', new Date().toLocaleTimeString());
-
-    try {
-      const response = await fetch('/api/ai/tasks/query-batch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ taskIds }),
-      });
-
-      if (!response.ok) throw new Error('Failed to query tasks');
-      const result = await response.json();
-
-      if (result.code === 0 && result.data) {
-        // Update tasks with latest status
-        setTasks((prevTasks) => {
-          const updatedTasks = [...prevTasks];
-          result.data.forEach((updatedTask: any) => {
-            const index = updatedTasks.findIndex((t) => t.id === updatedTask.id);
-            if (index !== -1) {
-              updatedTasks[index] = {
-                ...updatedTasks[index],
-                ...updatedTask,
-              };
-            }
-          });
-          return updatedTasks;
-        });
-
-        // Update polling IDs - remove completed tasks
-        const stillPending = result.data.filter(
-          (task: any) => task.status === 'pending'
-        );
-        setPollingIds(new Set(stillPending.map((task: any) => task.id)));
-      }
-    } catch (error) {
-      console.error('Failed to query batch tasks:', error);
-    }
-  }, []);
-
-  // Initial fetch
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  const pollingIdsRef = useRef<Set<string>>(new Set());
-
-  // 更新 ref 当 pollingIds 变化时
-  useEffect(() => {
-    pollingIdsRef.current = pollingIds;
-  }, [pollingIds]);
-
-  // Poll for pending tasks
-  useEffect(() => {
-    const hasPollingTasks = pollingIds.size > 0;
-    if (!hasPollingTasks) return;
-
-    console.log('Setting up polling interval for taskIds:', Array.from(pollingIds), 'at', new Date().toLocaleTimeString());
-
-    // 立即执行一次查询
-    queryBatchTasks(Array.from(pollingIds));
-
-    const interval = setInterval(() => {
-      console.log('Polling interval triggered at', new Date().toLocaleTimeString());
-      queryBatchTasks(Array.from(pollingIdsRef.current));
-    }, 3000); // Poll every 3 seconds
-
-    return () => {
-      console.log('Clearing polling interval at', new Date().toLocaleTimeString());
-      clearInterval(interval);
-    };
-  }, [pollingIds.size > 0, queryBatchTasks]);
 
   const handleDownload = async (task: AITask) => {
     try {
@@ -183,7 +80,7 @@ export function GenerationHistory({ videos = [], isLoading = false }: Generation
       setDeletingId(id);
       const response = await fetch(`/api/ai/tasks/${id}`, { method: 'DELETE' });
       if (response.ok) {
-        setTasks(tasks.filter(task => task.id !== id));
+        onDeleteTask?.(id);
         toast.success('Video deleted successfully');
       } else {
         toast.error('Failed to delete video');

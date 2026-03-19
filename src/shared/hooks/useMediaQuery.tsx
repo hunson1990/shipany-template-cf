@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState<boolean | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(query);
@@ -22,6 +22,14 @@ export function useMediaQuery(query: string): boolean {
       mediaQuery.removeEventListener("change", handleChange);
     };
   }, [query]);
+
+  // Return the initial value from matchMedia if not yet set by useEffect
+  if (matches === null) {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia(query).matches;
+    }
+    return false;
+  }
 
   return matches;
 }

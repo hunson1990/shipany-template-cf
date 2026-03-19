@@ -13,13 +13,25 @@ import { toast } from 'sonner';
 
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
-export function GenerationControlMobile({ onGenerationComplete }: { onGenerationComplete?: () => void }) {
+export function GenerationControlMobile({
+  onGenerationComplete,
+  initialPrompt = '',
+  initialImageFile = null,
+  initialImageUrl = '',
+  shouldEditImage = false,
+}: {
+  onGenerationComplete?: () => void;
+  initialPrompt?: string;
+  initialImageFile?: File | null;
+  initialImageUrl?: string;
+  shouldEditImage?: boolean;
+}) {
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string>('');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(shouldEditImage && !!initialImageFile && !!initialImageUrl);
+  const [pendingImageFile, setPendingImageFile] = useState<File | null>(initialImageFile);
   const [resolution, setResolution] = useState<string>(selectedModel.resolution[0]);
   const [duration, setDuration] = useState<number>(selectedModel.duration[0]);
   const [isUploading, setIsUploading] = useState(false);
@@ -46,7 +58,9 @@ export function GenerationControlMobile({ onGenerationComplete }: { onGeneration
     setPendingImageFile(null);
 
     // Show preview and start uploading
-    setImagePreviewUrl(URL.createObjectURL(processedFile));
+    const previewUrl = URL.createObjectURL(processedFile);
+    setImagePreviewUrl(previewUrl);
+    setUploadedImage(processedFile);
     setIsUploading(true);
 
     try {
@@ -325,6 +339,7 @@ export function GenerationControlMobile({ onGenerationComplete }: { onGeneration
       <ImageEditModal
         isOpen={isEditModalOpen}
         imageFile={pendingImageFile}
+        existingImageUrl={pendingImageFile ? undefined : imagePreviewUrl}
         onClose={handleEditClose}
         onConfirm={handleEditConfirm}
       />
