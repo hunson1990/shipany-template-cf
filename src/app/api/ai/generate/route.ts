@@ -4,6 +4,7 @@ import { getUuid } from '@/shared/lib/hash';
 import { respData, respErr } from '@/shared/lib/resp';
 import { createAITask, NewAITask } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
+import { getAllConfigs } from '@/shared/models/config';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
@@ -90,12 +91,19 @@ export async function POST(request: Request) {
 
     const callbackUrl = `${envConfigs.app_url}/api/ai/notify/${provider}`;
 
+    // Get global watermark config
+    const allConfigs = await getAllConfigs();
+    const waterMark = allConfigs.water_mark || '';
+
     const params: any = {
       mediaType,
       model,
       prompt,
       callbackUrl,
-      options,
+      options: {
+        ...options,
+        waterMark,
+      },
     };
 
     // generate content

@@ -215,7 +215,7 @@ export class KieProvider implements AIProvider {
     let payload: any = {
       prompt: params.prompt || '',
       callBackUrl: params.callbackUrl,
-      waterMark: 'kie.ai',
+      waterMark: params.options?.waterMark || '',
       duration: 5,
       quality: '720p',
     };
