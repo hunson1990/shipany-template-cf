@@ -4,17 +4,17 @@ import { AITaskStatus } from '@/extensions/ai';
 
 export async function POST(
   request: Request,
-  { params }: { params: { provider: string } }
+  { params }: { params: Promise<{ provider: string }> }
 ) {
+  const { provider } = await params;
   try {
-    const { provider } = params;
     const body = await request.json();
 
     console.log(`Received callback from ${provider}:`, body);
 
     // Extract taskId from callback payload
     // Different providers may have different payload structures
-    const taskId = body.taskId || body.id;
+    const taskId = body.taskId || body.id || body.data?.task_id;
     if (!taskId) {
       throw new Error('taskId not found in callback payload');
     }
@@ -64,7 +64,7 @@ export async function POST(
     console.log(`Task ${task.id} updated with status: ${status}`);
     return respOk();
   } catch (e: any) {
-    console.error(`Callback processing failed for ${params.provider}:`, e);
+    console.error(`Callback processing failed for ${provider}:`, e);
     return respErr(e.message);
   }
 }
