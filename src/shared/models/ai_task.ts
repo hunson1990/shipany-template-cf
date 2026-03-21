@@ -60,23 +60,33 @@ export async function findAITaskByTaskId(taskId: string) {
 }
 
 export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
+  console.log('[updateAITaskById] Start - taskId:', id, 'status:', updateAITask.status);
+
   const result = await db().transaction(async (tx: any) => {
     // 如果任务失败，需要退回已消费的积分
     if (updateAITask.status === AITaskStatus.FAILED && updateAITask.creditId) {
+      console.log('[updateAITaskById] Task FAILED - creditId:', updateAITask.creditId);
+
       // 1. 获取该任务消费的积分记录
       const [consumedCredit] = await tx
         .select()
         .from(credit)
         .where(eq(credit.id, updateAITask.creditId));
 
+      console.log('[updateAITaskById] Found consumedCredit:', consumedCredit?.id, 'status:', consumedCredit?.status);
+
       if (consumedCredit && consumedCredit.status === CreditStatus.ACTIVE) {
+        console.log('[updateAITaskById] Credit status is ACTIVE, processing refund...');
+
         // 2. 解析消费详情，获取所有被消费的积分项
         const consumedItems = JSON.parse(consumedCredit.consumedDetail || '[]');
+        console.log('[updateAITaskById] Consumed items count:', consumedItems.length);
 
         // 3. 将消费的积分加回到用户账户
         await Promise.all(
           consumedItems.map((item: any) => {
             if (item && item.creditId && item.creditsConsumed > 0) {
+              console.log('[updateAITaskById] Refunding credits:', item.creditsConsumed, 'to creditId:', item.creditId);
               return tx
                 .update(credit)
                 .set({
@@ -88,22 +98,29 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
         );
 
         // 4. 标记该消费记录为已删除（逻辑删除）
+        console.log('[updateAITaskById] Marking credit as DELETED');
         await tx
           .update(credit)
           .set({
             status: CreditStatus.DELETED,
           })
           .where(eq(credit.id, updateAITask.creditId));
+      } else {
+        console.log('[updateAITaskById] Credit not found or status is not ACTIVE, skipping refund');
       }
+    } else {
+      console.log('[updateAITaskById] Task not FAILED or no creditId, skipping refund logic');
     }
 
     // 5. 更新任务记录（状态、任务信息、任务结果等）
+    console.log('[updateAITaskById] Updating task record with status:', updateAITask.status);
     const [result] = await tx
       .update(aiTask)
       .set(updateAITask)
       .where(eq(aiTask.id, id))
       .returning();
 
+    console.log('[updateAITaskById] Task updated successfully');
     return result;
   });
 
