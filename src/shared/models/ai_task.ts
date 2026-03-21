@@ -86,7 +86,7 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
         await Promise.all(
           consumedItems.map((item: any) => {
             if (item && item.creditId && item.creditsConsumed > 0) {
-              console.log('[updateAITaskById] Refunding credits:', item.creditsConsumed, 'to creditId:', item.creditId);
+              console.log('[updateAITaskById] Refunding credits:', item.creditsConsumed, 'to user account creditId:', item.creditId, '(consumption record creditId:', updateAITask.creditId, ')');
               return tx
                 .update(credit)
                 .set({
