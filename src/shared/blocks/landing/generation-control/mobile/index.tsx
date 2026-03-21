@@ -359,7 +359,7 @@ export function GenerationControlMobile({
       <ImageEditModal
         isOpen={isEditModalOpen}
         imageFile={pendingImageFile}
-        existingImageUrl={pendingImageFile ? undefined : imagePreviewUrl}
+        existingImageUrl={pendingImageFile ? undefined : (imagePreviewUrl ?? undefined)}
         onClose={handleEditClose}
         onConfirm={handleEditConfirm}
       />

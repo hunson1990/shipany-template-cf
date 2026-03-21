@@ -41,7 +41,7 @@ export function VideoPlayer({ src, className = '' }: VideoPlayerProps) {
       }));
 
       // 初始隐藏控制栏
-      player.ready(function() {
+      player.ready(function(this: any) {
         this.userActive(false);
       });
     }
