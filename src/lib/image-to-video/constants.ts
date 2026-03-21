@@ -45,7 +45,7 @@ export const ImageToVideoModels: Record<string, ModelOption> = {
       { resolution: '1080p', duration: 10, cost_price: 0.72 },
     ],
     description: 'Better, faster and cheaper',
-    icon: '/imgs/models/pollo.png',
+    icon: '/imgs/models/soul-fuse.svg',
   },
   'veo3-fast': {
     id: 'veo3-fast',
