@@ -1,13 +1,17 @@
-'use client';
+‘use client’;
 
-import { useEffect } from 'react';
+import { useEffect } from ‘react’;
 
-import { getCookie, setCookie } from '@/shared/lib/cookie';
+import { getCookie, setCookie } from ‘@/shared/lib/cookie’;
 
-const COOKIE_NAME = 'utm_source';
+const UTM_COOKIES = {
+  source: ‘utm_source’,
+  medium: ‘utm_medium’,
+  campaign: ‘utm_campaign’,
+};
 const COOKIE_DAYS = 30;
 
-function sanitizeUtmSource(value: string) {
+function sanitizeUtmValue(value: string) {
   const decoded = (() => {
     try {
       return decodeURIComponent(value);
@@ -18,29 +22,61 @@ function sanitizeUtmSource(value: string) {
 
   return decoded
     .trim()
-    .replace(/[^\w\-.:]/g, '') // allow a-zA-Z0-9_ - . :
+    .replace(/[^\w\-.:]/g, ‘’) // allow a-zA-Z0-9_ - . :
     .slice(0, 100);
 }
 
 /**
- * Capture utm_source from landing URL and persist in cookie.
- * This enables server-side signup to save it into the user table.
+ * Capture utm_source, utm_medium, utm_campaign from landing URL and persist in cookies.
+ * Also capture the full signup URL.
+ * This enables server-side signup to save them into the user table.
  */
 export function UtmCapture() {
   useEffect(() => {
-    // Don’t overwrite if already captured.
-    if (getCookie(COOKIE_NAME)) return;
-
     const params = new URLSearchParams(window.location.search);
-    const utmSource = params.get('utm_source');
-    if (!utmSource) return;
 
-    const sanitized = sanitizeUtmSource(utmSource);
-    if (!sanitized) return;
+    // Capture utm_source
+    if (!getCookie(UTM_COOKIES.source)) {
+      const utmSource = params.get(‘utm_source’);
+      if (utmSource) {
+        const sanitized = sanitizeUtmValue(utmSource);
+        if (sanitized) {
+          setCookie(UTM_COOKIES.source, encodeURIComponent(sanitized), COOKIE_DAYS);
+        }
+      }
+    }
 
-    // Store encoded to keep cookie safe.
-    setCookie(COOKIE_NAME, encodeURIComponent(sanitized), COOKIE_DAYS);
+    // Capture utm_medium
+    if (!getCookie(UTM_COOKIES.medium)) {
+      const utmMedium = params.get(‘utm_medium’);
+      if (utmMedium) {
+        const sanitized = sanitizeUtmValue(utmMedium);
+        if (sanitized) {
+          setCookie(UTM_COOKIES.medium, encodeURIComponent(sanitized), COOKIE_DAYS);
+        }
+      }
+    }
+
+    // Capture utm_campaign
+    if (!getCookie(UTM_COOKIES.campaign)) {
+      const utmCampaign = params.get(‘utm_campaign’);
+      if (utmCampaign) {
+        const sanitized = sanitizeUtmValue(utmCampaign);
+        if (sanitized) {
+          setCookie(UTM_COOKIES.campaign, encodeURIComponent(sanitized), COOKIE_DAYS);
+        }
+      }
+    }
+
+    // Capture signup_url
+    if (!getCookie(‘signup_url’)) {
+      const url = window.location.href;
+      if (url) {
+        setCookie(‘signup_url’, encodeURIComponent(url), COOKIE_DAYS);
+      }
+    }
   }, []);
 
   return null;
 }
+

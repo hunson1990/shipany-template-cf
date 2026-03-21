@@ -27,6 +27,10 @@ export const user = table(
     updatedAt: timestamp('updated_at').defaultNow().onUpdateNow().notNull(),
     // Track first-touch acquisition channel (e.g. google, twitter, newsletter)
     utmSource: varchar('utm_source', { length: 100 }).notNull().default(''),
+    utmMedium: varchar('utm_medium', { length: 100 }).notNull().default(''),
+    utmCampaign: varchar('utm_campaign', { length: 100 }).notNull().default(''),
+    signupUrl: varchar('signup_url', { length: 500 }).notNull().default(''),
+    signupReferrer: varchar('signup_referrer', { length: 500 }).notNull().default(''),
     ip: varchar('ip', { length: 45 }).notNull().default(''),
     locale: varchar('locale', { length: 20 }).notNull().default(''),
   },

@@ -6,6 +6,7 @@ import NextTopLoader from 'nextjs-toploader';
 
 import { envConfigs } from '@/config';
 import { locales } from '@/config/locale';
+import { ReferrerCapture } from '@/shared/blocks/common/referrer-capture';
 import { UtmCapture } from '@/shared/blocks/common/utm-capture';
 import { getAllConfigs } from '@/shared/models/config';
 import { getAdsService } from '@/shared/services/ads';
@@ -159,6 +160,8 @@ export default async function RootLayout({
         />
 
         <UtmCapture />
+
+        <ReferrerCapture />
 
         {children}
 

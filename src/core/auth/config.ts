@@ -41,6 +41,30 @@ const authOptions = {
         required: false,
         defaultValue: '',
       },
+      utmMedium: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
+      utmCampaign: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
+      signupUrl: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
+      signupReferrer: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
       ip: {
         type: 'string',
         input: false,
@@ -109,20 +133,68 @@ export async function getAuthOptions(configs: Record<string, string>) {
                 user.locale = locale.slice(0, 20);
               }
 
-              // Only set on first creation; never overwrite later.
-              if (user?.utmSource) return user;
+              // UTM Source
+              if (!user?.utmSource) {
+                const raw = getCookieFromCtx(ctx, 'utm_source');
+                if (raw && typeof raw === 'string') {
+                  const decoded = decodeURIComponent(raw).trim();
+                  const sanitized = decoded
+                    .replace(/[^\w\-.:]/g, '')
+                    .slice(0, 100);
+                  if (sanitized) {
+                    user.utmSource = sanitized;
+                  }
+                }
+              }
 
-              const raw = getCookieFromCtx(ctx, 'utm_source');
-              if (!raw || typeof raw !== 'string') return user;
+              // UTM Medium
+              if (!user?.utmMedium) {
+                const raw = getCookieFromCtx(ctx, 'utm_medium');
+                if (raw && typeof raw === 'string') {
+                  const decoded = decodeURIComponent(raw).trim();
+                  const sanitized = decoded
+                    .replace(/[^\w\-.:]/g, '')
+                    .slice(0, 100);
+                  if (sanitized) {
+                    user.utmMedium = sanitized;
+                  }
+                }
+              }
 
-              // Keep it small & safe.
-              const decoded = decodeURIComponent(raw).trim();
-              const sanitized = decoded
-                .replace(/[^\w\-.:]/g, '') // allow a-zA-Z0-9_ - . :
-                .slice(0, 100);
+              // UTM Campaign
+              if (!user?.utmCampaign) {
+                const raw = getCookieFromCtx(ctx, 'utm_campaign');
+                if (raw && typeof raw === 'string') {
+                  const decoded = decodeURIComponent(raw).trim();
+                  const sanitized = decoded
+                    .replace(/[^\w\-.:]/g, '')
+                    .slice(0, 100);
+                  if (sanitized) {
+                    user.utmCampaign = sanitized;
+                  }
+                }
+              }
 
-              if (sanitized) {
-                user.utmSource = sanitized;
+              // Signup URL
+              if (!user?.signupUrl) {
+                const raw = getCookieFromCtx(ctx, 'signup_url');
+                if (raw && typeof raw === 'string') {
+                  const decoded = decodeURIComponent(raw).trim();
+                  if (decoded) {
+                    user.signupUrl = decoded.slice(0, 500);
+                  }
+                }
+              }
+
+              // Signup Referrer
+              if (!user?.signupReferrer) {
+                const raw = getCookieFromCtx(ctx, 'signup_referrer');
+                if (raw && typeof raw === 'string') {
+                  const decoded = decodeURIComponent(raw).trim();
+                  if (decoded) {
+                    user.signupReferrer = decoded.slice(0, 500);
+                  }
+                }
               }
             } catch {
               // best-effort only

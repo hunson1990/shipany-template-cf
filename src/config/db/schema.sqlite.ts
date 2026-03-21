@@ -26,6 +26,10 @@ export const user = table(
       .notNull(),
     // Track first-touch acquisition channel (e.g. google, twitter, newsletter)
     utmSource: text('utm_source').notNull().default(''),
+    utmMedium: text('utm_medium').notNull().default(''),
+    utmCampaign: text('utm_campaign').notNull().default(''),
+    signupUrl: text('signup_url').notNull().default(''),
+    signupReferrer: text('signup_referrer').notNull().default(''),
     ip: text('ip').notNull().default(''),
     locale: text('locale').notNull().default(''),
   },
