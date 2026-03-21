@@ -1,13 +1,13 @@
-‘use client’;
+'use client';
 
-import { useEffect } from ‘react’;
+import { useEffect } from 'react';
 
-import { getCookie, setCookie } from ‘@/shared/lib/cookie’;
+import { getCookie, setCookie } from '@/shared/lib/cookie';
 
 const UTM_COOKIES = {
-  source: ‘utm_source’,
-  medium: ‘utm_medium’,
-  campaign: ‘utm_campaign’,
+  source: 'utm_source',
+  medium: 'utm_medium',
+  campaign: 'utm_campaign',
 };
 const COOKIE_DAYS = 30;
 
@@ -22,7 +22,7 @@ function sanitizeUtmValue(value: string) {
 
   return decoded
     .trim()
-    .replace(/[^\w\-.:]/g, ‘’) // allow a-zA-Z0-9_ - . :
+    .replace(/[^\w\-.:]/g, '') // allow a-zA-Z0-9_ - . :
     .slice(0, 100);
 }
 
@@ -37,7 +37,7 @@ export function UtmCapture() {
 
     // Capture utm_source
     if (!getCookie(UTM_COOKIES.source)) {
-      const utmSource = params.get(‘utm_source’);
+      const utmSource = params.get('utm_source');
       if (utmSource) {
         const sanitized = sanitizeUtmValue(utmSource);
         if (sanitized) {
@@ -48,7 +48,7 @@ export function UtmCapture() {
 
     // Capture utm_medium
     if (!getCookie(UTM_COOKIES.medium)) {
-      const utmMedium = params.get(‘utm_medium’);
+      const utmMedium = params.get('utm_medium');
       if (utmMedium) {
         const sanitized = sanitizeUtmValue(utmMedium);
         if (sanitized) {
@@ -59,7 +59,7 @@ export function UtmCapture() {
 
     // Capture utm_campaign
     if (!getCookie(UTM_COOKIES.campaign)) {
-      const utmCampaign = params.get(‘utm_campaign’);
+      const utmCampaign = params.get('utm_campaign');
       if (utmCampaign) {
         const sanitized = sanitizeUtmValue(utmCampaign);
         if (sanitized) {
@@ -69,14 +69,13 @@ export function UtmCapture() {
     }
 
     // Capture signup_url
-    if (!getCookie(‘signup_url’)) {
+    if (!getCookie('signup_url')) {
       const url = window.location.href;
       if (url) {
-        setCookie(‘signup_url’, encodeURIComponent(url), COOKIE_DAYS);
+        setCookie('signup_url', encodeURIComponent(url), COOKIE_DAYS);
       }
     }
   }, []);
 
   return null;
 }
-
