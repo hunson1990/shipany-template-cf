@@ -19,6 +19,9 @@ const table: typeof pgTable = customSchema
   ? (customSchema.table.bind(customSchema) as unknown as typeof pgTable)
   : pgTable;
 
+const tzTimestamp = (name: string) =>
+ timestamp(name, { withTimezone: true });
+
 export const user = table(
   'user',
   {
@@ -27,8 +30,8 @@ export const user = table(
     email: text('email').notNull().unique(),
     emailVerified: boolean('email_verified').default(false).notNull(),
     image: text('image'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -53,10 +56,11 @@ export const session = table(
   'session',
   {
     id: text('id').primaryKey(),
-    expiresAt: timestamp('expires_at').notNull(),
+    expiresAt: tzTimestamp('expires_at').notNull(),
     token: text('token').notNull().unique(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text('ip_address'),
@@ -84,12 +88,13 @@ export const account = table(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     idToken: text('id_token'),
-    accessTokenExpiresAt: timestamp('access_token_expires_at'),
-    refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
+    accessTokenExpiresAt: tzTimestamp('access_token_expires_at'),
+    refreshTokenExpiresAt: tzTimestamp('refresh_token_expires_at'),
     scope: text('scope'),
     password: text('password'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -108,9 +113,9 @@ export const verification = table(
     id: text('id').primaryKey(),
     identifier: text('identifier').notNull(),
     value: text('value').notNull(),
-    expiresAt: timestamp('expires_at').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    expiresAt: tzTimestamp('expires_at').notNull(),
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
@@ -141,11 +146,12 @@ export const taxonomy = table(
     image: text('image'),
     icon: text('icon'),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     sort: integer('sort').default(0).notNull(),
   },
   (table) => [
@@ -174,11 +180,12 @@ export const post = table(
     authorName: text('author_name'),
     authorImage: text('author_image'),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     sort: integer('sort').default(0).notNull(),
   },
   (table) => [
@@ -214,12 +221,13 @@ export const order = table(
     paymentEmail: text('payment_email'), // actual payment email
     paymentAmount: integer('payment_amount'), // actual payment amount
     paymentCurrency: text('payment_currency'), // actual payment currency
-    paidAt: timestamp('paid_at'), // paid at
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    paidAt: tzTimestamp('paid_at'), // paid at
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     description: text('description'), // order description
     productName: text('product_name'), // product name
     subscriptionId: text('subscription_id'), // provider subscription id
@@ -276,13 +284,14 @@ export const subscription = table(
     interval: text('interval'), // subscription interval, day, week, month, year
     intervalCount: integer('interval_count'), // subscription interval count
     trialPeriodDays: integer('trial_period_days'), // subscription trial period days
-    currentPeriodStart: timestamp('current_period_start'), // subscription current period start
-    currentPeriodEnd: timestamp('current_period_end'), // subscription current period end
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    currentPeriodStart: tzTimestamp('current_period_start'), // subscription current period start
+    currentPeriodEnd: tzTimestamp('current_period_end'), // subscription current period end
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     planName: text('plan_name'),
     billingUrl: text('billing_url'),
     productName: text('product_name'), // subscription product name
@@ -290,8 +299,8 @@ export const subscription = table(
     creditsValidDays: integer('credits_valid_days'), // subscription credits valid days
     paymentProductId: text('payment_product_id'), // subscription payment product id
     paymentUserId: text('payment_user_id'), // subscription payment user id
-    canceledAt: timestamp('canceled_at'), // subscription canceled apply at
-    canceledEndAt: timestamp('canceled_end_at'), // subscription canceled end at
+    canceledAt: tzTimestamp('canceled_at'), // subscription canceled apply at
+    canceledEndAt: tzTimestamp('canceled_end_at'), // subscription canceled end at
     canceledReason: text('canceled_reason'), // subscription canceled reason
     canceledReasonType: text('canceled_reason_type'), // subscription canceled reason type
   },
@@ -330,13 +339,14 @@ export const credit = table(
     credits: integer('credits').notNull(), // credits amount, n or -n
     remainingCredits: integer('remaining_credits').notNull().default(0), // remaining credits amount
     description: text('description'), // transaction description
-    expiresAt: timestamp('expires_at'), // transaction expires at
+    expiresAt: tzTimestamp('expires_at'), // transaction expires at
     status: text('status').notNull(), // transaction status
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     consumedDetail: text('consumed_detail'), // consumed detail
     metadata: text('metadata'), // transaction metadata
   },
@@ -369,11 +379,12 @@ export const apikey = table(
     key: text('key').notNull(),
     title: text('title').notNull(),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
   },
   (table) => [
     // Composite: Query user's API keys by status
@@ -394,8 +405,9 @@ export const role = table(
     title: text('title').notNull(),
     description: text('description'),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     sort: integer('sort').default(0).notNull(),
@@ -415,8 +427,9 @@ export const permission = table(
     action: text('action').notNull(), // read, write, delete
     title: text('title').notNull(),
     description: text('description'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -437,11 +450,12 @@ export const rolePermission = table(
     permissionId: text('permission_id')
       .notNull()
       .references(() => permission.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
   },
   (table) => [
     // Composite: Query permissions for a role
@@ -463,11 +477,12 @@ export const userRole = table(
     roleId: text('role_id')
       .notNull()
       .references(() => role.id, { onDelete: 'cascade' }),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    expiresAt: timestamp('expires_at'),
+    expiresAt: tzTimestamp('expires_at'),
   },
   (table) => [
     // Composite: Query user's active roles (most critical for auth)
@@ -489,11 +504,12 @@ export const aiTask = table(
     prompt: text('prompt').notNull(),
     options: text('options'),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
-    deletedAt: timestamp('deleted_at'),
+    deletedAt: tzTimestamp('deleted_at'),
     taskId: text('task_id'), // provider task id
     taskInfo: text('task_info'), // provider task info
     taskResult: text('task_result'), // provider task result
@@ -519,8 +535,9 @@ export const chat = table(
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     model: text('model').notNull(),
@@ -544,8 +561,9 @@ export const chatMessage = table(
       .notNull()
       .references(() => chat.id, { onDelete: 'cascade' }),
     status: text('status').notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at')
+    createdAt: tzTimestamp('created_at').defaultNow().notNull(),
+    updatedAt: tzTimestamp('updated_at')
+      .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
     role: text('role').notNull(),
