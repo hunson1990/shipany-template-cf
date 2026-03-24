@@ -24,7 +24,7 @@ export function GenerationControlPC({
   onGenerationComplete?: () => void;
 }) {
   const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
-  const { user, setIsShowSignModal } = useAppContext();
+  const { user, setIsShowSignModal, setIsShowPaymentModal } = useAppContext();
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [videoOptions, setVideoOptions] = useState<VideoOptions>({
@@ -185,6 +185,12 @@ export function GenerationControlPC({
           console.log('Generation task created:', result.data);
           // Call the callback to switch to history tab
           onGenerationComplete?.();
+        } else if (
+          result.code === -2 ||
+          result.message === 'INSUFFICIENT_CREDITS'
+        ) {
+          toast.error('Insufficient credits. Please top up to keep creating.');
+          setIsShowPaymentModal(true);
         } else {
           throw new Error(result.message || 'Generation failed');
         }

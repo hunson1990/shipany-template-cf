@@ -76,8 +76,13 @@ interface SongGeneratorProps {
 
 export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
   const t = useTranslations('ai.music');
-  const { user, isCheckSign, setIsShowSignModal, fetchUserCredits } =
-    useAppContext();
+  const {
+    user,
+    isCheckSign,
+    setIsShowSignModal,
+    setIsShowPaymentModal,
+    fetchUserCredits,
+  } = useAppContext();
 
   // Form state
   const [provider, setProvider] = useState('kie');
@@ -252,6 +257,7 @@ export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
 
     if (!user.credits || user.credits.remainingCredits < costCredits) {
       toast.error('Insufficient credits');
+      setIsShowPaymentModal(true);
       return;
     }
 
@@ -333,6 +339,14 @@ export function MusicGenerator({ className, srOnlyTitle }: SongGeneratorProps) {
 
       const { code, message, data } = await resp.json();
       if (code !== 0) {
+        if (code === -2 || message === 'INSUFFICIENT_CREDITS') {
+          setIsShowPaymentModal(true);
+          toast.error('Insufficient credits');
+          setIsGenerating(false);
+          setProgress(0);
+          setGenerationStartTime(null);
+          return;
+        }
         throw new Error(message || 'Failed to generate music');
       }
 

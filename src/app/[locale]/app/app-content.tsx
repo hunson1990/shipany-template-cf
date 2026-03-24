@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useImageUpload } from '@/shared/context/ImageUploadContext';
-import { useMediaQuery } from '@/shared/hooks/useMediaQuery';
+import { useAppContext } from '@/shared/contexts/app';
 import { GenerationHistory } from '@/shared/blocks/landing/generation-history';
 import { GenerationControlPC } from '@/shared/blocks/landing/generation-control/pc';
 import { GenerationControlMobile } from '@/shared/blocks/landing/generation-control/mobile';
+import { Pricing as PricingBlock } from '@/themes/default/blocks/pricing';
+import { Button } from '@/shared/components/ui/button';
+import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
+import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
 
 interface AITask {
   id: string;
@@ -27,20 +29,20 @@ interface AITask {
 }
 
 interface AppContentProps {
-  mockVideos: any[];
+  pricingSection: PricingSection;
 }
 
-export function AppContent({ mockVideos }: AppContentProps) {
-  const searchParams = useSearchParams();
-  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt } = useImageUpload();
+export function AppContent({ pricingSection }: AppContentProps) {
+  const { isShowPaymentModal, setIsShowPaymentModal } = useAppContext();
+
   const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
   const [tasks, setTasks] = useState<AITask[]>([]);
   const [loading, setLoading] = useState(false);
   const [pollingIds, setPollingIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const pollingIdsRef = useRef<Set<string>>(new Set());
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
-  // Fetch tasks from API
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
@@ -51,8 +53,9 @@ export function AppContent({ mockVideos }: AppContentProps) {
         setTasks(result.data);
         setHistoryLoaded(true);
 
-        // Find pending tasks that need polling
-        const pendingTasks = result.data.filter((task: AITask) => task.status === 'pending');
+        const pendingTasks = result.data.filter(
+          (task: AITask) => task.status === 'pending'
+        );
         setPollingIds(new Set(pendingTasks.map((task: AITask) => task.id)));
       }
     } catch (error) {
@@ -62,7 +65,6 @@ export function AppContent({ mockVideos }: AppContentProps) {
     }
   }, []);
 
-  // Query batch tasks to get latest status
   const queryBatchTasks = useCallback(async (taskIds: string[]) => {
     if (taskIds.length === 0) return;
 
@@ -79,7 +81,6 @@ export function AppContent({ mockVideos }: AppContentProps) {
       const result = await response.json();
 
       if (result.code === 0 && result.data) {
-        // Update tasks with latest status
         setTasks((prevTasks) => {
           const updatedTasks = [...prevTasks];
           result.data.forEach((updatedTask: any) => {
@@ -94,7 +95,6 @@ export function AppContent({ mockVideos }: AppContentProps) {
           return updatedTasks;
         });
 
-        // Update polling IDs - remove completed tasks
         const stillPending = result.data.filter(
           (task: any) => task.status === 'pending'
         );
@@ -105,49 +105,51 @@ export function AppContent({ mockVideos }: AppContentProps) {
     }
   }, []);
 
-  // Update ref when pollingIds changes
   useEffect(() => {
     pollingIdsRef.current = pollingIds;
   }, [pollingIds]);
 
-  // PC: Initial fetch on mount
   useEffect(() => {
-    // Only fetch on mount for PC (desktop)
     const isDesktop = window.innerWidth >= 1024;
     if (isDesktop) {
       fetchTasks();
     }
   }, [fetchTasks]);
 
-  // Poll for pending tasks (only when history is loaded)
   useEffect(() => {
     const hasPollingTasks = pollingIds.size > 0;
     if (!hasPollingTasks) return;
 
-    // Execute immediately
     queryBatchTasks(Array.from(pollingIds));
 
     const interval = setInterval(() => {
       queryBatchTasks(Array.from(pollingIdsRef.current));
-    }, 3000); // Poll every 3 seconds
+    }, 3000);
 
     return () => {
       clearInterval(interval);
     };
   }, [pollingIds.size > 0, queryBatchTasks]);
 
-  const handleTabChange = useCallback((tab: 'create' | 'history') => {
-    setActiveTab(tab);
-    // Fetch tasks when switching to history tab on mobile
-    if (tab === 'history' && !historyLoaded) {
-      fetchTasks();
+  useEffect(() => {
+    if (isShowPaymentModal && !isPricingModalOpen) {
+      setIsPricingModalOpen(true);
+      setIsShowPaymentModal(false);
     }
-  }, [historyLoaded, fetchTasks]);
+  }, [isPricingModalOpen, isShowPaymentModal, setIsShowPaymentModal]);
+
+  const handleTabChange = useCallback(
+    (tab: 'create' | 'history') => {
+      setActiveTab(tab);
+      if (tab === 'history' && !historyLoaded) {
+        fetchTasks();
+      }
+    },
+    [historyLoaded, fetchTasks]
+  );
 
   const handleGenerationComplete = useCallback(() => {
-    // Switch to history tab on mobile
     setActiveTab('history');
-    // Refresh tasks
     fetchTasks();
   }, [fetchTasks]);
 
@@ -157,8 +159,16 @@ export function AppContent({ mockVideos }: AppContentProps) {
 
   return (
     <>
-      {/* Desktop Layout (>= 1024px) */}
-      <div className="hidden lg:block min-h-screen bg-background pb-48">
+      <Button
+ type="button"
+ variant="secondary"
+ className="fixed right-4 top-20 z-50"
+ onClick={() => setIsPricingModalOpen(true)}
+ >
+ Test Pricing Popup
+ </Button>
+
+ <div className="hidden lg:block min-h-screen bg-background pb-48">
         <div className="mx-auto max-w-6xl p-8">
           <div className="p-6">
             <GenerationHistory
@@ -168,14 +178,10 @@ export function AppContent({ mockVideos }: AppContentProps) {
             />
           </div>
         </div>
-        <GenerationControlPC
-          onGenerationComplete={handleGenerationComplete}
-        />
+        <GenerationControlPC onGenerationComplete={handleGenerationComplete} />
       </div>
 
-      {/* Mobile Layout (< 1024px) */}
       <div className="lg:hidden min-h-screen bg-background flex flex-col">
-        {/* Tab Navigation - Fixed below header */}
         <div className="fixed top-14 left-0 right-0 flex bg-muted z-40">
           <button
             onClick={() => handleTabChange('create')}
@@ -199,7 +205,6 @@ export function AppContent({ mockVideos }: AppContentProps) {
           </button>
         </div>
 
-        {/* Tab Content - Add margin top to account for fixed tab */}
         <div className="flex-1 overflow-y-auto mt-12">
           {activeTab === 'create' && (
             <GenerationControlMobile
@@ -217,6 +222,17 @@ export function AppContent({ mockVideos }: AppContentProps) {
           )}
         </div>
       </div>
+
+      <Dialog open={isPricingModalOpen} onOpenChange={setIsPricingModalOpen}>
+        <DialogContent className="h-[92vh] w-[98vw] max-w-[98vw] sm:max-w-[98vw] overflow-y-auto p-0">
+ <DialogTitle className="sr-only">Pricing</DialogTitle>
+          <PricingBlock
+ section={pricingSection}
+ className="py-8 md:py-10"
+ showHeader={false}
+ />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

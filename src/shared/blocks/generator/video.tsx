@@ -270,8 +270,13 @@ export function VideoGenerator({
     return [];
   });
 
-  const { user, isCheckSign, setIsShowSignModal, fetchUserCredits } =
-    useAppContext();
+  const {
+    user,
+    isCheckSign,
+    setIsShowSignModal,
+    setIsShowPaymentModal,
+    fetchUserCredits,
+  } = useAppContext();
 
   useEffect(() => {
     setIsMounted(true);
@@ -519,6 +524,7 @@ export function VideoGenerator({
 
     if (remainingCredits < costCredits) {
       toast.error('Insufficient credits. Please top up to keep creating.');
+      setIsShowPaymentModal(true);
       return;
     }
 
@@ -590,6 +596,12 @@ export function VideoGenerator({
 
       const { code, message, data } = await resp.json();
       if (code !== 0) {
+        if (code === -2 || message === 'INSUFFICIENT_CREDITS') {
+          setIsShowPaymentModal(true);
+          toast.error('Insufficient credits. Please top up to keep creating.');
+          resetTaskState();
+          return;
+        }
         throw new Error(message || 'Failed to create a video task');
       }
 

@@ -1,7 +1,7 @@
 import { envConfigs } from '@/config';
 import { AIMediaType } from '@/extensions/ai';
 import { getUuid } from '@/shared/lib/hash';
-import { respData, respErr } from '@/shared/lib/resp';
+import { respData, respErr, respJson } from '@/shared/lib/resp';
 import { createAITask, NewAITask } from '@/shared/models/ai_task';
 import { getRemainingCredits } from '@/shared/models/credit';
 import { getAllConfigs } from '@/shared/models/config';
@@ -86,7 +86,10 @@ export async function POST(request: Request) {
     // check credits
     const remainingCredits = await getRemainingCredits(user.id);
     if (remainingCredits < costCredits) {
-      throw new Error('insufficient credits');
+      return respJson(-2, 'INSUFFICIENT_CREDITS', {
+        required: costCredits,
+        current: remainingCredits,
+      });
     }
 
     const callbackUrl = `${envConfigs.app_url}/api/ai/notify/${provider}`;

@@ -235,8 +235,13 @@ export function ImageGenerator({
   );
   const [isMounted, setIsMounted] = useState(false);
 
-  const { user, isCheckSign, setIsShowSignModal, fetchUserCredits } =
-    useAppContext();
+  const {
+    user,
+    isCheckSign,
+    setIsShowSignModal,
+    setIsShowPaymentModal,
+    fetchUserCredits,
+  } = useAppContext();
 
   useEffect(() => {
     setIsMounted(true);
@@ -480,6 +485,7 @@ export function ImageGenerator({
 
     if (remainingCredits < costCredits) {
       toast.error('Insufficient credits. Please top up to keep creating.');
+      setIsShowPaymentModal(true);
       return;
     }
 
@@ -533,6 +539,12 @@ export function ImageGenerator({
 
       const { code, message, data } = await resp.json();
       if (code !== 0) {
+        if (code === -2 || message === 'INSUFFICIENT_CREDITS') {
+          setIsShowPaymentModal(true);
+          toast.error('Insufficient credits. Please top up to keep creating.');
+          resetTaskState();
+          return;
+        }
         throw new Error(message || 'Failed to create an image task');
       }
 

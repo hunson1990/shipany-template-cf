@@ -80,10 +80,12 @@ export function Pricing({
   section,
   className,
   currentSubscription,
+  showHeader = true,
 }: {
   section: PricingType;
   className?: string;
   currentSubscription?: Subscription;
+  showHeader?: boolean;
 }) {
   const locale = useLocale();
   const t = useTranslations('pages.pricing.messages');
@@ -329,17 +331,19 @@ export function Pricing({
       id={section.id}
       className={cn('py-24 md:py-36', section.className, className)}
     >
-      <div className="mx-auto mb-12 px-4 text-center md:px-8">
-        {section.sr_only_title && (
-          <h1 className="sr-only">{section.sr_only_title}</h1>
-        )}
-        <h2 className="mb-6 text-3xl font-bold text-pretty lg:text-4xl">
-          {section.title}
-        </h2>
-        <p className="text-muted-foreground mx-auto mb-4 max-w-xl lg:max-w-none lg:text-lg">
-          {section.description}
-        </p>
-      </div>
+      {showHeader && (
+        <div className="mx-auto mb-12 px-4 text-center md:px-8">
+          {section.sr_only_title && (
+            <h1 className="sr-only">{section.sr_only_title}</h1>
+          )}
+          <h2 className="mb-6 text-3xl font-bold text-pretty lg:text-4xl">
+            {section.title}
+          </h2>
+          <p className="text-muted-foreground mx-auto mb-4 max-w-xl lg:max-w-none lg:text-lg">
+            {section.description}
+          </p>
+        </div>
+      )}
 
       <div className="container">
         {section.groups && section.groups.length > 0 && (
