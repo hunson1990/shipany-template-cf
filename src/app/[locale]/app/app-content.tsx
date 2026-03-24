@@ -6,7 +6,6 @@ import { GenerationHistory } from '@/shared/blocks/landing/generation-history';
 import { GenerationControlPC } from '@/shared/blocks/landing/generation-control/pc';
 import { GenerationControlMobile } from '@/shared/blocks/landing/generation-control/mobile';
 import { Pricing as PricingBlock } from '@/themes/default/blocks/pricing';
-import { Button } from '@/shared/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
 import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
 
@@ -159,16 +158,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
 
   return (
     <>
-      <Button
- type="button"
- variant="secondary"
- className="fixed right-4 top-20 z-50"
- onClick={() => setIsPricingModalOpen(true)}
- >
- Test Pricing Popup
- </Button>
-
- <div className="hidden lg:block min-h-screen bg-background pb-48">
+      <div className="hidden lg:block min-h-screen bg-background pb-48">
         <div className="mx-auto max-w-6xl p-8">
           <div className="p-6">
             <GenerationHistory
