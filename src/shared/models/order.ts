@@ -350,7 +350,7 @@ export async function updateSubscriptionInTransaction({
     // deal with order
     if (newOrder) {
       let existingOrder: any = null;
-      if (newOrder.transactionId && newOrder.paymentProvider) {
+      if (newOrder.transactionId && newOrder.paymentProvider && newOrder.paymentType) {
         // not create order with same payment transaction id and payment provider
         const [existingOrderResult] = await tx
           .select()
@@ -358,7 +358,8 @@ export async function updateSubscriptionInTransaction({
           .where(
             and(
               eq(order.transactionId, newOrder.transactionId),
-              eq(order.paymentProvider, newOrder.paymentProvider)
+              eq(order.paymentProvider, newOrder.paymentProvider),
+              eq(order.paymentType, newOrder.paymentType)
             )
           );
 
@@ -370,6 +371,16 @@ export async function updateSubscriptionInTransaction({
         const [orderResult] = await tx
           .insert(order)
           .values(newOrder)
+          .onConflictDoUpdate({
+            target: [
+              order.paymentProvider,
+              order.transactionId,
+              order.paymentType,
+            ],
+            set: {
+              updatedAt: new Date(),
+            },
+          })
           .returning();
 
         existingOrder = orderResult;
