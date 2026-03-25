@@ -157,7 +157,7 @@ export async function POST(
 
  await handleSubscriptionRenewal({
  subscription: existingSubscription,
- session,
+ session, 
  });
 
  console.log('[payment-notify] subscription renewal handled', {
