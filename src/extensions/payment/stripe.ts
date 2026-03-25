@@ -233,10 +233,10 @@ export class StripeProvider implements PaymentProvider {
    */
   async getPaymentEvent({ req }: { req: Request }): Promise<PaymentEvent> {
     try {
-      const rawBody = await req.text();
+      const rawBodyBuffer = Buffer.from(await req.arrayBuffer());
       const signature = req.headers.get('stripe-signature') as string;
 
-      if (!rawBody || !signature) {
+      if (!rawBodyBuffer.length || !signature) {
         throw new Error('Invalid webhook request');
       }
 
@@ -244,10 +244,25 @@ export class StripeProvider implements PaymentProvider {
         throw new Error('Signing Secret not configured');
       }
 
+      const signingSecret = this.configs.signingSecret;
+      const maskedSigningSecret =
+        signingSecret.length > 12
+          ? `${signingSecret.slice(0, 8)}...${signingSecret.slice(-4)}`
+          : '***';
+
+      const signaturePrefix = signature.split(',')[0] || '';
+
+ console.log('[stripe-webhook] verifying signature', {
+        signingSecret: maskedSigningSecret,
+        signingSecretLength: signingSecret.length,
+ signaturePrefix,
+ rawBodyLength: rawBodyBuffer.length,
+      });
+
       const event = this.client.webhooks.constructEvent(
-        rawBody,
+        rawBodyBuffer,
         signature,
-        this.configs.signingSecret
+        signingSecret
       );
 
       let paymentSession: PaymentSession | undefined = undefined;
@@ -361,6 +376,7 @@ export class StripeProvider implements PaymentProvider {
       case 'checkout.session.completed':
         return PaymentEventType.CHECKOUT_SUCCESS;
       case 'invoice.payment_succeeded':
+ case 'invoice.paid':
         return PaymentEventType.PAYMENT_SUCCESS;
       case 'invoice.payment_failed':
         return PaymentEventType.PAYMENT_FAILED;

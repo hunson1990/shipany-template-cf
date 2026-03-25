@@ -134,15 +134,32 @@ export async function handleCheckoutSuccess({
     throw new Error('invalid order');
   }
 
+  console.log('[payment] handleCheckoutSuccess start', {
+    at: new Date().toISOString(),
+    orderNo,
+    userId: order.userId,
+    paymentType: order.paymentType,
+    orderStatus: order.status,
+    paymentStatus: session.paymentStatus,
+  });
+
   // Idempotency check: if order is already paid, skip processing
   if (order.status === OrderStatus.PAID) {
-    console.log(`Order ${orderNo} is already paid, skipping`);
+    console.log('[payment] handleCheckoutSuccess skip already paid', {
+      at: new Date().toISOString(),
+      orderNo,
+      orderStatus: order.status,
+    });
     return;
   }
 
   // Only process orders in CREATED or PENDING status
   if (order.status !== OrderStatus.CREATED && order.status !== OrderStatus.PENDING) {
-    console.log(`Order ${orderNo} status is ${order.status}, not processing`);
+    console.log('[payment] handleCheckoutSuccess skip invalid status', {
+      at: new Date().toISOString(),
+      orderNo,
+      orderStatus: order.status,
+    });
     return;
   }
 
@@ -154,6 +171,16 @@ export async function handleCheckoutSuccess({
 
   // payment success
   if (session.paymentStatus === PaymentStatus.SUCCESS) {
+    console.log('[payment] handleCheckoutSuccess processing success', {
+      at: new Date().toISOString(),
+      orderNo,
+      userId: order.userId,
+      paymentType: order.paymentType,
+      transactionId: session.paymentInfo?.transactionId,
+      paymentAmount: session.paymentInfo?.paymentAmount,
+      paymentCurrency: session.paymentInfo?.paymentCurrency,
+    });
+
     // update order status to be paid
     const updateOrder: UpdateOrder = {
       status: OrderStatus.PAID,
@@ -212,6 +239,19 @@ export async function handleCheckoutSuccess({
       updateOrder.subscriptionResult = JSON.stringify(
         session.subscriptionResult
       );
+
+      console.log('[payment] handleCheckoutSuccess prepared subscription', {
+        at: new Date().toISOString(),
+        orderNo,
+        userId: order.userId,
+        subscriptionNo: newSubscription.subscriptionNo,
+        subscriptionId: newSubscription.subscriptionId,
+        status: newSubscription.status,
+        interval: newSubscription.interval,
+        intervalCount: newSubscription.intervalCount,
+        amount: newSubscription.amount,
+        currency: newSubscription.currency,
+      });
     }
 
     // grant credit for order
@@ -260,6 +300,13 @@ export async function handleCheckoutSuccess({
     await updateOrderByOrderNo(orderNo, {
       status: OrderStatus.FAILED,
       paymentResult: JSON.stringify(session.paymentResult),
+    });
+
+    console.log('[payment] handleCheckoutSuccess marked failed', {
+      at: new Date().toISOString(),
+      orderNo,
+      userId: order.userId,
+      paymentStatus: session.paymentStatus,
     });
   } else if (session.paymentStatus === PaymentStatus.PROCESSING) {
     // update order payment result
