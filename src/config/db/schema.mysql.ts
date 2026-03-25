@@ -6,6 +6,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/mysql-core';
 
@@ -225,11 +226,11 @@ export const order = table(
       table.status,
       table.paymentType
     ),
-    // Composite: Prevent duplicate payments
-    // Can also be used for: WHERE transactionId = ? (left-prefix)
-    index('idx_order_transaction_provider').on(
+    // Composite unique: prevent duplicate payment records for same provider transaction and payment type
+    uniqueIndex('uq_order_provider_txn_type').on(
+      table.paymentProvider,
       table.transactionId,
-      table.paymentProvider
+      table.paymentType
     ),
     // Order orders by creation time for listing
     index('idx_order_created_at').on(table.createdAt),
