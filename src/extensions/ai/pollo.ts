@@ -49,30 +49,56 @@ export class PolloProvider implements AIProvider {
  throw new Error('prompt or imageUrl is required');
  }
 
- const apiUrl = `${this.getBaseUrl()}/video/generate`;
+ const brand = params.options?.modelBrand;
+ const version = params.options?.modelVersion;
 
- const payload: any = {
- model: params.model,
+ if (!brand || !version) {
+ throw new Error('modelBrand and modelVersion are required');
+ }
+
+ const apiUrl = `${this.getBaseUrl()}/generation/${brand}/${version}`;
+ console.log('[pollo] generate apiUrl', { apiUrl, brand, version });
+
+ let resolution = params.options?.resolution;
+ if (typeof resolution === 'string' && ['wanx', 'minimax'].includes(brand)) {
+ resolution = resolution.toUpperCase();
+ }
+
+ const input: any = {
  prompt: params.prompt || '',
- callBackUrl: params.callbackUrl,
+ negativePrompt: '',
+ imageTail: '',
+ strength:60,
+ length: params.options?.duration,
+ resolution,
+ aspectRatio: params.options?.aspectRatio || '16:9',
+ mode: 'basic',
  };
 
- if (params.options) {
- payload.resolution = params.options.resolution;
- payload.duration = params.options.duration;
- payload.aspectRatio = params.options.aspectRatio;
- payload.imageUrl = params.options.imageUrl;
- payload.endFrame = params.options.endFrame;
- payload.waterMark = params.options.waterMark || '';
- payload.modelBrand = params.options.modelBrand;
- payload.modelVersion = params.options.modelVersion;
+ if (params.options?.imageUrl) {
+ input.image = params.options.imageUrl;
  }
+
+ if (params.options?.endFrameImageUrl) {
+ input.imageTail = params.options.endFrameImageUrl;
+ } else if (params.options?.endFrame) {
+ input.imageTail = params.options.endFrame;
+ }
+
+ if (params.options?.waterMark) {
+ input.waterMark = params.options.waterMark;
+ }
+
+ const payload = {
+ input,
+ webhookUrl: params.callbackUrl,
+ };
 
  const resp = await fetch(apiUrl, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
- Authorization: `Bearer ${this.configs.apiKey}`,
+ 'x-api-key': this.configs.apiKey,
  },
  body: JSON.stringify(payload),
  });
@@ -83,8 +109,8 @@ export class PolloProvider implements AIProvider {
 
  const data = await resp.json();
 
- if (!data?.data?.taskId) {
- throw new Error(data?.msg || 'generate video failed: no taskId');
+ if (!data?.data?.taskId || data?.code !== 'SUCCESS') {
+ throw new Error(data?.message || data?.msg || 'generate video failed: no taskId');
  }
 
  return {
@@ -100,7 +126,8 @@ export class PolloProvider implements AIProvider {
  throw new Error('taskId is required');
  }
 
- const apiUrl = `${this.getBaseUrl()}/video/recordInfo?taskId=${encodeURIComponent(taskId)}`;
+ const apiUrl = `${this.getBaseUrl()}/generation/${encodeURIComponent(taskId)}/status`;
+ console.log('[pollo] query apiUrl', { apiUrl, taskId });
 
  const resp = await fetch(apiUrl, {
  method: 'GET',
@@ -172,12 +199,12 @@ export class PolloProvider implements AIProvider {
  }
 
  private getBaseUrl(): string {
- const baseUrl = this.configs.baseUrl || '';
- if (!baseUrl) {
- throw new Error('pollo baseUrl is required');
+ const configuredBaseUrl = this.configs.baseUrl?.trim();
+ if (configuredBaseUrl) {
+ return configuredBaseUrl.replace(/\/$/, '');
  }
 
- return baseUrl.replace(/\/$/, '');
+ return 'https://pollo.ai/api/platform';
  }
 
  private mapStatus(data: any): AITaskStatus {

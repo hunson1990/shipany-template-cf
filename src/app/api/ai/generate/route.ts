@@ -62,6 +62,17 @@ export async function POST(request: Request) {
     }
 
     const aiService = await getAIService();
+ const availableProviders = aiService.getProviderNames();
+
+ console.log('[ai/generate] incoming request', {
+ provider,
+ mediaType,
+ model,
+ scene,
+ hasPrompt: Boolean(prompt),
+ hasOptions: Boolean(options),
+ availableProviders,
+ });
 
     // check generate type
     if (!aiService.getMediaTypes().includes(mediaType)) {
