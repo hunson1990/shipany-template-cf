@@ -115,21 +115,32 @@ const MODEL_OPTIONS = [
     provider: 'kie',
     scenes: ['text-to-video'],
   },
+  // Pollo models
+  {
+    value: 'soul-fuse-v1-6',
+    label: 'Soul Fuse v1.6',
+    provider: 'pollo',
+    scenes: ['image-to-video'],
+  },
 ];
 
 const PROVIDER_OPTIONS = [
-  {
-    value: 'replicate',
-    label: 'Replicate',
-  },
-  {
-    value: 'fal',
-    label: 'Fal',
-  },
-  {
-    value: 'kie',
-    label: 'Kie',
-  },
+ {
+ value: 'replicate',
+ label: 'Replicate',
+ },
+ {
+ value: 'fal',
+ label: 'Fal',
+ },
+ {
+ value: 'kie',
+ label: 'Kie',
+ },
+ {
+ value: 'pollo',
+ label: 'Pollo',
+ },
 ];
 
 function parseTaskResult(taskResult: string | null): any {

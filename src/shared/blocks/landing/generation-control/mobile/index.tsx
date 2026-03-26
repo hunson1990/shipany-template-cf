@@ -154,52 +154,63 @@ export function GenerationControlMobile({
     console.log('Create with:', generationParams);
 
     // Call API to generate video
-    if (selectedModel.platform === 'kie') {
-      try {
-        const response = await fetch('/api/ai/generate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+    const provider =
+      selectedModel.platform === 'kie' || selectedModel.platform === 'pollo'
+        ? selectedModel.platform
+        : undefined;
+
+    if (!provider) {
+      setIsCreating(false);
+      toast.error(`Unsupported model platform: ${selectedModel.platform}`);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provider,
+          mediaType: 'video',
+          model: selectedModel.id,
+          prompt,
+          scene: 'image-to-video',
+          options: {
+            resolution,
+            duration,
+            imageUrl: imagePreviewUrlState,
+            modelBrand: selectedModel.model_brand,
+            modelVersion: selectedModel.model_version,
           },
-          body: JSON.stringify({
-            provider: 'kie',
-            mediaType: 'video',
-            model: selectedModel.id,
-            prompt,
-            scene: 'image-to-video',
-            options: {
-              resolution,
-              duration,
-              imageUrl: imagePreviewUrlState,
-            },
-          }),
-        });
+        }),
+      });
 
-        if (!response.ok) {
-          throw new Error(`API request failed with status ${response.status}`);
-        }
-
-        const result = await response.json();
-        if (result.code === 0) {
-          toast.success('Video generation started');
-          console.log('Generation task created:', result.data);
-          // Call the callback to switch to history tab
-          onGenerationComplete?.();
-        } else if (
-          result.code === -2 ||
-          result.message === 'INSUFFICIENT_CREDITS'
-        ) {
-          toast.error('Insufficient credits. Please top up to keep creating.');
-          setIsShowPaymentModal(true);
-        } else {
-          throw new Error(result.message || 'Generation failed');
-        }
-      } catch (error) {
-        console.error('Generation failed:', error);
-        toast.error(error instanceof Error ? error.message : 'Generation failed');
-      } finally {
-        setIsCreating(false);
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
       }
+
+      const result = await response.json();
+      if (result.code === 0) {
+        toast.success('Video generation started');
+        console.log('Generation task created:', result.data);
+        // Call the callback to switch to history tab
+        onGenerationComplete?.();
+      } else if (
+        result.code === -2 ||
+        result.message === 'INSUFFICIENT_CREDITS'
+      ) {
+        toast.error('Insufficient credits. Please top up to keep creating.');
+        setIsShowPaymentModal(true);
+      } else {
+        throw new Error(result.message || 'Generation failed');
+      }
+    } catch (error) {
+      console.error('Generation failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Generation failed');
+    } finally {
+      setIsCreating(false);
     }
   };
 
