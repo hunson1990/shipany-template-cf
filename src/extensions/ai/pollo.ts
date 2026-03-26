@@ -2,282 +2,304 @@ import { getUuid } from '@/shared/lib/hash';
 
 import { saveFiles } from '.';
 import {
- AIConfigs,
- AIFile,
- AIGenerateParams,
- AIMediaType,
- AIProvider,
- AITaskResult,
- AITaskStatus,
- AIVideo,
+  AIConfigs,
+  AIFile,
+  AIGenerateParams,
+  AIMediaType,
+  AIProvider,
+  AITaskResult,
+  AITaskStatus,
+  AIVideo,
 } from './types';
 
 /**
  * Pollo configs
  */
 export interface PolloConfigs extends AIConfigs {
- apiKey: string;
- baseUrl?: string;
- customStorage?: boolean;
+  apiKey: string;
+  baseUrl?: string;
+  customStorage?: boolean;
 }
 
 /**
  * Pollo provider (video only)
  */
 export class PolloProvider implements AIProvider {
- readonly name = 'pollo';
- configs: PolloConfigs;
+  readonly name = 'pollo';
+  configs: PolloConfigs;
 
- constructor(configs: PolloConfigs) {
- this.configs = configs;
- }
+  constructor(configs: PolloConfigs) {
+    this.configs = configs;
+  }
 
- async generate({
- params,
- }: {
- params: AIGenerateParams;
- }): Promise<AITaskResult> {
- if (params.mediaType !== AIMediaType.VIDEO) {
- throw new Error(`mediaType not supported: ${params.mediaType}`);
- }
+  async generate({
+    params,
+  }: {
+    params: AIGenerateParams;
+  }): Promise<AITaskResult> {
+    if (params.mediaType !== AIMediaType.VIDEO) {
+      throw new Error(`mediaType not supported: ${params.mediaType}`);
+    }
 
- if (!params.model) {
- throw new Error('model is required');
- }
+    if (!params.model) {
+      throw new Error('model is required');
+    }
 
- if (!params.prompt && !params.options?.imageUrl) {
- throw new Error('prompt or imageUrl is required');
- }
+    const prompt =
+      typeof params.prompt === 'string' ? params.prompt.trim() : '';
+    const imageUrl =
+      typeof params.options?.imageUrl === 'string'
+        ? params.options.imageUrl.trim()
+        : '';
 
- const brand = params.options?.modelBrand;
- const version = params.options?.modelVersion;
+    if (!prompt && !imageUrl) {
+      throw new Error('prompt or imageUrl is required');
+    }
 
- if (!brand || !version) {
- throw new Error('modelBrand and modelVersion are required');
- }
+    const brand = params.options?.modelBrand;
+    const version = params.options?.modelVersion;
 
- const apiUrl = `${this.getBaseUrl()}/generation/${brand}/${version}`;
- console.log('[pollo] generate apiUrl', { apiUrl, brand, version });
+    if (!brand || !version) {
+      throw new Error('modelBrand and modelVersion are required');
+    }
 
- let resolution = params.options?.resolution;
- if (typeof resolution === 'string' && ['wanx', 'minimax'].includes(brand)) {
- resolution = resolution.toUpperCase();
- }
+    const apiUrl = `${this.getBaseUrl()}/generation/${brand}/${version}`;
+    console.log('[pollo] generate apiUrl', { apiUrl, brand, version });
 
- const input: any = {
- prompt: params.prompt || '',
- negativePrompt: '',
- imageTail: '',
- strength:60,
- length: params.options?.duration,
- resolution,
- aspectRatio: params.options?.aspectRatio || '16:9',
- mode: 'basic',
- };
+    let resolution = params.options?.resolution;
+    if (typeof resolution === 'string' && ['wanx', 'minimax'].includes(brand)) {
+      resolution = resolution.toUpperCase();
+    }
 
- if (params.options?.imageUrl) {
- input.image = params.options.imageUrl;
- }
+    const input: any = {
+      negativePrompt: '',
+      imageTail: '',
+      strength: 60,
+      length: params.options?.duration,
+      resolution,
+      aspectRatio: params.options?.aspectRatio || '16:9',
+      mode: 'basic',
+    };
 
- if (params.options?.endFrameImageUrl) {
- input.imageTail = params.options.endFrameImageUrl;
- } else if (params.options?.endFrame) {
- input.imageTail = params.options.endFrame;
- }
+    if (prompt) {
+      input.prompt = prompt;
+    }
 
- if (params.options?.waterMark) {
- input.waterMark = params.options.waterMark;
- }
+    if (imageUrl) {
+      input.image = imageUrl;
+    }
 
- const payload = {
- input,
- webhookUrl: params.callbackUrl,
- };
+    if (params.options?.endFrameImageUrl) {
+      input.imageTail = params.options.endFrameImageUrl;
+    } else if (params.options?.endFrame) {
+      input.imageTail = params.options.endFrame;
+    }
 
- const resp = await fetch(apiUrl, {
- method: 'POST',
- headers: {
- 'Content-Type': 'application/json',
- 'x-api-key': this.configs.apiKey,
- },
- body: JSON.stringify(payload),
- });
+    if (params.options?.waterMark) {
+      input.waterMark = params.options.waterMark;
+    }
 
- if (!resp.ok) {
- throw new Error(`request failed with status: ${resp.status}`);
- }
+    const payload = {
+      input,
+      webhookUrl: params.callbackUrl,
+    };
 
- const data = await resp.json();
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.configs.apiKey,
+      },
+      body: JSON.stringify(payload),
+    });
 
- if (!data?.data?.taskId || data?.code !== 'SUCCESS') {
- throw new Error(data?.message || data?.msg || 'generate video failed: no taskId');
- }
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(
+        `request failed with status: ${resp.status}, body: ${errorText}`
+      );
+    }
 
- return {
- taskStatus: AITaskStatus.PENDING,
- taskId: data.data.taskId,
- taskInfo: {},
- taskResult: data,
- };
- }
+    const data = await resp.json();
 
- async query({ taskId }: { taskId: string }): Promise<AITaskResult> {
- if (!taskId) {
- throw new Error('taskId is required');
- }
+    if (!data?.data?.taskId || data?.code !== 'SUCCESS') {
+      const errorDetails = data?.issues
+        ? `, issues: ${JSON.stringify(data.issues)}`
+        : '';
+      throw new Error(
+        `${data?.code || 'UNKNOWN'}: ${data?.message || data?.msg || 'generate video failed: no taskId'}${errorDetails}`
+      );
+    }
 
- const apiUrl = `${this.getBaseUrl()}/generation/${encodeURIComponent(taskId)}/status`;
- console.log('[pollo] query apiUrl', { apiUrl, taskId });
+    return {
+      taskStatus: AITaskStatus.PENDING,
+      taskId: data.data.taskId,
+      taskInfo: {},
+      taskResult: data,
+    };
+  }
 
- const resp = await fetch(apiUrl, {
- method: 'GET',
- headers: {
- 'Content-Type': 'application/json',
- Authorization: `Bearer ${this.configs.apiKey}`,
- },
- });
+  async query({ taskId }: { taskId: string }): Promise<AITaskResult> {
+    if (!taskId) {
+      throw new Error('taskId is required');
+    }
 
- if (!resp.ok) {
- throw new Error(`request failed with status: ${resp.status}`);
- }
+    const apiUrl = `${this.getBaseUrl()}/generation/${encodeURIComponent(taskId)}/status`;
+    console.log('[pollo] query apiUrl', { apiUrl, taskId });
 
- const data = await resp.json();
+    const resp = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.configs.apiKey,
+      },
+    });
 
- const taskStatus = this.mapStatus(data);
+    if (!resp.ok) {
+      throw new Error(`request failed with status: ${resp.status}`);
+    }
 
- let videos: AIVideo[] | undefined = undefined;
+    const data = await resp.json();
 
- if (taskStatus === AITaskStatus.SUCCESS) {
- const videoUrls = this.extractVideoUrls(data);
- videos = videoUrls.map((videoUrl) => ({
- id: '',
- createTime: new Date(),
- videoUrl,
- }));
+    const taskStatus = this.mapStatus(data);
 
- if (this.configs.customStorage && videos.length >0) {
- const filesToSave: AIFile[] = videos
- .map((video, index) => {
- if (!video.videoUrl) {
- return null;
- }
- return {
- url: video.videoUrl,
- contentType: 'video/mp4',
- key: `pollo/video/${getUuid()}.mp4`,
- index,
- type: 'video',
- } as AIFile;
- })
- .filter(Boolean) as AIFile[];
+    let videos: AIVideo[] | undefined = undefined;
 
- if (filesToSave.length >0) {
- const uploadedFiles = await saveFiles(filesToSave);
- if (uploadedFiles) {
- uploadedFiles.forEach((file) => {
- if (videos && file.index !== undefined && videos[file.index]) {
- videos[file.index].videoUrl = file.url;
- }
- });
- }
- }
- }
- }
+    if (taskStatus === AITaskStatus.SUCCESS) {
+      const videoUrls = this.extractVideoUrls(data);
+      videos = videoUrls.map((videoUrl) => ({
+        id: '',
+        createTime: new Date(),
+        videoUrl,
+      }));
 
- return {
- taskId,
- taskStatus,
- taskInfo: {
- videos,
- status: data?.data?.status || data?.status || '',
- errorCode: data?.code ? String(data.code) : '',
- errorMessage: data?.msg || data?.message || '',
- createTime: new Date(),
- },
- taskResult: data,
- };
- }
+      if (this.configs.customStorage && videos.length > 0) {
+        const filesToSave: AIFile[] = videos
+          .map((video, index) => {
+            if (!video.videoUrl) {
+              return null;
+            }
+            return {
+              url: video.videoUrl,
+              contentType: 'video/mp4',
+              key: `pollo/video/${getUuid()}.mp4`,
+              index,
+              type: 'video',
+            } as AIFile;
+          })
+          .filter(Boolean) as AIFile[];
 
- private getBaseUrl(): string {
- const configuredBaseUrl = this.configs.baseUrl?.trim();
- if (configuredBaseUrl) {
- return configuredBaseUrl.replace(/\/$/, '');
- }
+        if (filesToSave.length > 0) {
+          const uploadedFiles = await saveFiles(filesToSave);
+          if (uploadedFiles) {
+            uploadedFiles.forEach((file) => {
+              if (videos && file.index !== undefined && videos[file.index]) {
+                videos[file.index].videoUrl = file.url;
+              }
+            });
+          }
+        }
+      }
+    }
 
- return 'https://pollo.ai/api/platform';
- }
+    return {
+      taskId,
+      taskStatus,
+      taskInfo: {
+        videos,
+        status: data?.data?.status || data?.status || '',
+        errorCode: data?.code ? String(data.code) : '',
+        errorMessage: data?.msg || data?.message || '',
+        createTime: new Date(),
+      },
+      taskResult: data,
+    };
+  }
 
- private mapStatus(data: any): AITaskStatus {
- const status = String(data?.data?.status || data?.status || '').toLowerCase();
+  private getBaseUrl(): string {
+    const configuredBaseUrl = this.configs.baseUrl?.trim();
+    if (configuredBaseUrl) {
+      return configuredBaseUrl.replace(/\/$/, '');
+    }
 
- if (data?.code && Number(data.code) !==200) {
- return AITaskStatus.FAILED;
- }
+    return 'https://pollo.ai/api/platform';
+  }
 
- switch (status) {
- case 'success':
- case 'succeeded':
- case 'completed':
- case 'finish':
- case 'finished':
- return AITaskStatus.SUCCESS;
- case 'failed':
- case 'fail':
- case 'error':
- return AITaskStatus.FAILED;
- case 'processing':
- case 'running':
- case 'in_progress':
- return AITaskStatus.PROCESSING;
- case 'pending':
- case 'queued':
- case 'created':
- case 'submitted':
- return AITaskStatus.PENDING;
- default:
- return AITaskStatus.PENDING;
- }
- }
+  private mapStatus(data: any): AITaskStatus {
+    const status = String(
+      data?.data?.status || data?.status || ''
+    ).toLowerCase();
+    const code = String(data?.code || '').toUpperCase();
 
- private extractVideoUrls(data: any): string[] {
- const candidates = [
- data?.data?.videoUrl,
- data?.data?.video_url,
- data?.data?.url,
- data?.data?.output,
- data?.data?.result,
- data?.videoUrl,
- data?.video_url,
- data?.url,
- data?.output,
- data?.result,
- ];
+    if (code && code !== 'SUCCESS') {
+      return AITaskStatus.FAILED;
+    }
 
- const urls: string[] = [];
+    switch (status) {
+      case 'success':
+      case 'succeed':
+      case 'succeeded':
+      case 'completed':
+      case 'finish':
+      case 'finished':
+        return AITaskStatus.SUCCESS;
+      case 'failed':
+      case 'fail':
+      case 'error':
+        return AITaskStatus.FAILED;
+      case 'processing':
+      case 'running':
+      case 'in_progress':
+        return AITaskStatus.PROCESSING;
+      case 'pending':
+      case 'queued':
+      case 'created':
+      case 'submitted':
+        return AITaskStatus.PENDING;
+      default:
+        return AITaskStatus.PENDING;
+    }
+  }
 
- candidates.forEach((candidate) => {
- if (!candidate) {
- return;
- }
+  private extractVideoUrls(data: any): string[] {
+    const candidates = [
+      data?.data?.videoUrl,
+      data?.data?.video_url,
+      data?.data?.url,
+      data?.data?.output,
+      data?.data?.result,
+      data?.videoUrl,
+      data?.video_url,
+      data?.url,
+      data?.output,
+      data?.result,
+    ];
 
- if (typeof candidate === 'string') {
- urls.push(candidate);
- return;
- }
+    const urls: string[] = [];
 
- if (Array.isArray(candidate)) {
- candidate.forEach((item) => {
- if (typeof item === 'string') {
- urls.push(item);
- } else if (item?.url) {
- urls.push(item.url);
- } else if (item?.videoUrl) {
- urls.push(item.videoUrl);
- }
- });
- }
- });
+    candidates.forEach((candidate) => {
+      if (!candidate) {
+        return;
+      }
 
- return Array.from(new Set(urls.filter(Boolean)));
- }
+      if (typeof candidate === 'string') {
+        urls.push(candidate);
+        return;
+      }
+
+      if (Array.isArray(candidate)) {
+        candidate.forEach((item) => {
+          if (typeof item === 'string') {
+            urls.push(item);
+          } else if (item?.url) {
+            urls.push(item.url);
+          } else if (item?.videoUrl) {
+            urls.push(item.videoUrl);
+          }
+        });
+      }
+    });
+
+    return Array.from(new Set(urls.filter(Boolean)));
+  }
 }
