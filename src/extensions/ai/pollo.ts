@@ -122,7 +122,9 @@ export class PolloProvider implements AIProvider {
 
     const data = await resp.json();
 
-    if (!data?.data?.taskId || data?.code !== 'SUCCESS') {
+    const code = String(data?.code || '').toUpperCase();
+
+    if (!data?.data?.taskId || (code && code !== 'SUCCESS')) {
       const errorDetails = data?.issues
         ? `, issues: ${JSON.stringify(data.issues)}`
         : '';
@@ -252,6 +254,7 @@ export class PolloProvider implements AIProvider {
       case 'in_progress':
         return AITaskStatus.PROCESSING;
       case 'pending':
+      case 'waiting':
       case 'queued':
       case 'created':
       case 'submitted':
