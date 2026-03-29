@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     // update ai task
     const updateAITask: UpdateAITask = {
       status: result.taskStatus,
-      taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
+    taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
       taskResult: result.taskResult ? JSON.stringify(result.taskResult) : null,
       creditId: task.creditId, // credit consumption record id
     };

@@ -53,7 +53,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
         setHistoryLoaded(true);
 
         const pendingTasks = result.data.filter(
-          (task: AITask) => task.status === 'pending'
+          (task: AITask) => task.status === 'pending' || task.status === 'processing'
         );
         setPollingIds(new Set(pendingTasks.map((task: AITask) => task.id)));
       }
@@ -95,7 +95,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
         });
 
         const stillPending = result.data.filter(
-          (task: any) => task.status === 'pending'
+          (task: any) => task.status === 'pending' || task.status === 'processing'
         );
         setPollingIds(new Set(stillPending.map((task: any) => task.id)));
       }

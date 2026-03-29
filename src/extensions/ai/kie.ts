@@ -438,32 +438,17 @@ export class KieProvider implements AIProvider {
     }
 
     // 构建返回结果
-    const result: AITaskResult = {
-      taskStatus,
-      taskId: data.taskId,
-      taskInfo: {
-        status: data.state,
-        createTime: data.generateTime ? new Date(data.generateTime) : undefined,
-        errorCode: data.failCode?.toString(),
-        errorMessage: data.failMsg,
-      },
-    };
+    let videos: AIVideo[] | undefined = undefined;
 
     // 如果成功，添加视频信息
     if (taskStatus === AITaskStatus.SUCCESS && data.videoInfo) {
-      result.taskResult = {
-        videoInfo: {
-          videoId: data.videoInfo.videoId,
-          videoUrl: data.videoInfo.videoUrl,
-          imageUrl: data.videoInfo.imageUrl,
-        },
-      };
+      let videoUrl = data.videoInfo.videoUrl;
 
       // 如果配置了自定义存储，保存视频
-      if (this.configs.customStorage && data.videoInfo.videoUrl) {
+      if (this.configs.customStorage && videoUrl) {
         const filesToSave: AIFile[] = [
           {
-            url: data.videoInfo.videoUrl,
+            url: videoUrl,
             contentType: 'video/mp4',
             key: `kie/video/${getUuid()}.mp4`,
             type: 'video',
@@ -472,10 +457,30 @@ export class KieProvider implements AIProvider {
 
         const uploadedFiles = await saveFiles(filesToSave);
         if (uploadedFiles && uploadedFiles.length > 0) {
-          result.taskResult.videoInfo.videoUrl = uploadedFiles[0].url;
+          videoUrl = uploadedFiles[0].url;
         }
       }
+
+      videos = [{
+        id: data.videoInfo.videoId,
+        videoUrl,
+        thumbnailUrl: data.videoInfo.imageUrl,
+        createTime: new Date(),
+      }];
     }
+
+    const result: AITaskResult = {
+      taskStatus,
+      taskId: data.taskId,
+      taskInfo: {
+        videos,
+        status: data.state,
+        createTime: data.generateTime ? new Date(data.generateTime) : undefined,
+        errorCode: data.failCode?.toString(),
+        errorMessage: data.failMsg,
+      },
+      taskResult: data,
+    };
 
     return result;
   }

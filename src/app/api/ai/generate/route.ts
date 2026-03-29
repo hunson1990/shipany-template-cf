@@ -122,7 +122,9 @@ export async function POST(request: Request) {
     };
 
     // generate content
+    console.log('[ai/generate] aiProvider:', aiProvider.name, 'configs:', aiProvider.configs);
     const result = await aiProvider.generate({ params });
+    console.log('[ai/generate] result:', JSON.stringify(result, null, 2));
     if (!result?.taskId) {
       throw new Error(
         `ai generate failed, mediaType: ${mediaType}, provider: ${provider}, model: ${model}`

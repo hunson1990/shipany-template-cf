@@ -119,10 +119,10 @@ export function GenerationHistory({ tasks = [], loading = false, onDeleteTask }:
     <>
       <div className="space-y-4">
         {tasks.map((task) => {
-          const taskResult = task.taskResult ? JSON.parse(task.taskResult) : null;
-          const videoUrl = taskResult?.videoInfo?.videoUrl;
+          const taskInfo = task.taskInfo ? JSON.parse(task.taskInfo) : null;
+          const videoUrl = taskInfo?.videos?.[0]?.videoUrl;
           const imageUrl = task.options ? JSON.parse(task.options).imageUrl : '';
-          const isPending = task.status === 'pending';
+          const isPending = task.status === 'pending' || task.status === 'processing';
           const isSuccess = task.status === 'success';
           const isFailed = task.status === 'failed';
 
