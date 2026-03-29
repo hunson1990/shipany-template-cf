@@ -31,3 +31,22 @@ export default defineConfig({
         }
       : undefined,
 });
+
+// -- 批量为 public 下所有表开启 RLS
+// DO $$
+// DECLARE
+//     table_record RECORD;
+// BEGIN
+//     -- 遍历所有表
+//     FOR table_record IN 
+//         SELECT tablename 
+//         FROM pg_tables 
+//         WHERE schemaname = 'public'  -- 只处理 public  schema
+//     LOOP
+//         -- 开启 RLS
+//         EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY;', table_record.tablename);
+        
+//         -- 可选：强制开启 RLS（即使表所有者也必须遵守规则）
+//         EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY;', table_record.tablename);
+//     END LOOP;
+// END $$;
