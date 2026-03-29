@@ -111,12 +111,18 @@ export async function POST(
     }
 
     // Update task in database
-    await updateAITaskById(task.id, {
+    console.log('更新task:{}', task.id, {
       status,
       taskInfo: taskInfo ? JSON.stringify(taskInfo) : null,
       taskResult: taskResult ? JSON.stringify(taskResult) : null,
       creditId: task.creditId,
-    });
+    })
+    // await updateAITaskById(task.id, {
+    //   status,
+    //   taskInfo: taskInfo ? JSON.stringify(taskInfo) : null,
+    //   taskResult: taskResult ? JSON.stringify(taskResult) : null,
+    //   creditId: task.creditId,
+    // });
 
     console.log(`Task ${task.id} updated with status: ${status}`);
     return respOk();

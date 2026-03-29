@@ -65,11 +65,6 @@ export class PolloProvider implements AIProvider {
 
     const apiUrl = `${this.getBaseUrl()}/generation/${brand}/${version}`;
     console.log('[pollo] generate apiUrl', { apiUrl, brand, version });
- console.log('[pollo] generate proxy env', {
- HTTP_PROXY: process.env.HTTP_PROXY || '',
- HTTPS_PROXY: process.env.HTTPS_PROXY || '',
- NO_PROXY: process.env.NO_PROXY || '',
- });
 
     let resolution = params.options?.resolution;
     if (typeof resolution === 'string' && ['wanx', 'minimax'].includes(brand)) {
@@ -153,11 +148,6 @@ export class PolloProvider implements AIProvider {
 
     const apiUrl = `${this.getBaseUrl()}/generation/${encodeURIComponent(taskId)}/status`;
     console.log('[pollo] query apiUrl', { apiUrl, taskId });
-    console.log('[pollo] query proxy env', {
-      HTTP_PROXY: process.env.HTTP_PROXY || '',
-      HTTPS_PROXY: process.env.HTTPS_PROXY || '',
-      NO_PROXY: process.env.NO_PROXY || '',
-    });
 
     const resp = await fetch(apiUrl, {
       method: 'GET',
