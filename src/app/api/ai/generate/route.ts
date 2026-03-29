@@ -1,14 +1,15 @@
+import { ImageToVideoModels } from '@/lib/image-to-video/constants';
+import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
+
 import { envConfigs } from '@/config';
 import { AIMediaType } from '@/extensions/ai';
 import { getUuid } from '@/shared/lib/hash';
 import { respData, respErr, respJson } from '@/shared/lib/resp';
 import { createAITask, NewAITask } from '@/shared/models/ai_task';
-import { getRemainingCredits } from '@/shared/models/credit';
 import { getAllConfigs } from '@/shared/models/config';
+import { getRemainingCredits } from '@/shared/models/credit';
 import { getUserInfo } from '@/shared/models/user';
 import { getAIService } from '@/shared/services/ai';
-import { ImageToVideoModels } from '@/lib/image-to-video/constants';
-import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 
 // Calculate cost credits based on model and options
 function calculateCostCredits(
@@ -62,17 +63,17 @@ export async function POST(request: Request) {
     }
 
     const aiService = await getAIService();
- const availableProviders = aiService.getProviderNames();
+    const availableProviders = aiService.getProviderNames();
 
- console.log('[ai/generate] incoming request', {
- provider,
- mediaType,
- model,
- scene,
- hasPrompt: Boolean(prompt),
- hasOptions: Boolean(options),
- availableProviders,
- });
+    console.log('[ai/generate] incoming request', {
+      provider,
+      mediaType,
+      model,
+      scene,
+      hasPrompt: Boolean(prompt),
+      hasOptions: Boolean(options),
+      availableProviders,
+    });
 
     // check generate type
     if (!aiService.getMediaTypes().includes(mediaType)) {

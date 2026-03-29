@@ -29,9 +29,13 @@ export async function POST(req: Request) {
     }
 
     const aiService = await getAIService();
-    const aiProvider = aiService.getProvider(task.provider);
+ const aiProvider = aiService.getProvider(task.provider);
     if (!aiProvider) {
       return respErr('invalid ai provider');
+    }
+
+    if (!aiProvider.query) {
+      return respErr('query not supported for ai provider');
     }
 
     const result = await aiProvider.query({

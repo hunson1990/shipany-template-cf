@@ -39,7 +39,12 @@ export async function POST(req: Request) {
           continue;
         }
 
-        const result = await aiProvider?.query?.({
+        if (!aiProvider.query) {
+          results.push({ id: taskId, error: 'query not supported for ai provider' });
+          continue;
+        }
+
+        const result = await aiProvider.query({
           taskId: task.taskId,
           mediaType: task.mediaType,
           model: task.model,
@@ -58,7 +63,11 @@ export async function POST(req: Request) {
           creditId: task.creditId,
         };
 
-        if (updateData.taskInfo !== task.taskInfo) {
+        if (
+          updateData.status !== task.status ||
+          updateData.taskInfo !== task.taskInfo ||
+          updateData.taskResult !== task.taskResult
+        ) {
           await updateAITaskById(task.id, updateData);
         }
 
