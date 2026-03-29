@@ -173,30 +173,26 @@ export class PolloProvider implements AIProvider {
     let videos: AIVideo[] | undefined = undefined;
 
     if (taskStatus === AITaskStatus.SUCCESS) {
-      const videoUrls = this.extractVideoUrls(data);
-      videos = videoUrls.map((videoUrl) => ({
-        id: '',
-        createTime: new Date(),
-        videoUrl,
-      }));
+      const generations = data?.data?.generations;
+      if (Array.isArray(generations) && generations.length > 0) {
+        videos = generations
+          .filter((gen: any) => gen?.url)
+          .map((gen: any) => ({
+            id: gen.id || '',
+            createTime: gen.createdDate ? new Date(gen.createdDate) : new Date(),
+            videoUrl: gen.url,
+          }));
 
-      if (this.configs.customStorage && videos.length > 0) {
-        const filesToSave: AIFile[] = videos
-          .map((video, index) => {
-            if (!video.videoUrl) {
-              return null;
-            }
-            return {
-              url: video.videoUrl,
+        if (this.configs.customStorage && videos.length > 0) {
+          const filesToSave: AIFile[] = videos
+            .map((video, index) => ({
+              url: video.videoUrl!,
               contentType: 'video/mp4',
               key: `pollo/video/${getUuid()}.mp4`,
               index,
               type: 'video',
-            } as AIFile;
-          })
-          .filter(Boolean) as AIFile[];
+            }));
 
-        if (filesToSave.length > 0) {
           const uploadedFiles = await saveFiles(filesToSave);
           if (uploadedFiles) {
             uploadedFiles.forEach((file) => {
@@ -272,45 +268,4 @@ export class PolloProvider implements AIProvider {
     }
   }
 
-  private extractVideoUrls(data: any): string[] {
-    const candidates = [
-      data?.data?.videoUrl,
-      data?.data?.video_url,
-      data?.data?.url,
-      data?.data?.output,
-      data?.data?.result,
-      data?.videoUrl,
-      data?.video_url,
-      data?.url,
-      data?.output,
-      data?.result,
-    ];
-
-    const urls: string[] = [];
-
-    candidates.forEach((candidate) => {
-      if (!candidate) {
-        return;
-      }
-
-      if (typeof candidate === 'string') {
-        urls.push(candidate);
-        return;
-      }
-
-      if (Array.isArray(candidate)) {
-        candidate.forEach((item) => {
-          if (typeof item === 'string') {
-            urls.push(item);
-          } else if (item?.url) {
-            urls.push(item.url);
-          } else if (item?.videoUrl) {
-            urls.push(item.videoUrl);
-          }
-        });
-      }
-    });
-
-    return Array.from(new Set(urls.filter(Boolean)));
-  }
 }
