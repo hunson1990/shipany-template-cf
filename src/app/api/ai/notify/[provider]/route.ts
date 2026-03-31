@@ -1,10 +1,12 @@
 import { respOk, respErr } from '@/shared/lib/resp';
-import { findAITaskByTaskId, updateAITaskById } from '@/shared/models/ai_task';
-import { AITaskStatus } from '@/extensions/ai';
+import { findAITaskByTaskId, updateAITaskById, UpdateAITask } from '@/shared/models/ai_task';
+import { AITaskStatus, AITaskInfo, AIImage, AIVideo } from '@/extensions/ai';
 
 interface ProviderHandler {
   mapStatus(body: any): AITaskStatus;
   getErrorMessage(body: any): string | undefined;
+  getTaskInfo(body: any, existingInfo?: AITaskInfo): AITaskInfo;
+  getTaskResult(body: any): any;
 }
 
 const providerHandlers: Record<string, ProviderHandler> = {
@@ -15,6 +17,8 @@ const providerHandlers: Record<string, ProviderHandler> = {
       return AITaskStatus.PENDING;
     },
     getErrorMessage: (body) => body.msg,
+    getTaskInfo: (body, existingInfo) => existingInfo || {},
+    getTaskResult: (body) => body,
   },
   replicate: {
     mapStatus: (body) => {
@@ -29,6 +33,8 @@ const providerHandlers: Record<string, ProviderHandler> = {
       return statusMap[status] || AITaskStatus.PENDING;
     },
     getErrorMessage: (body) => body.error,
+    getTaskInfo: (body, existingInfo) => existingInfo || {},
+    getTaskResult: (body) => body,
   },
   fal: {
     mapStatus: (body) => {
@@ -42,14 +48,79 @@ const providerHandlers: Record<string, ProviderHandler> = {
       return statusMap[status] || AITaskStatus.PENDING;
     },
     getErrorMessage: (body) => body.error,
+    getTaskInfo: (body, existingInfo) => existingInfo || {},
+    getTaskResult: (body) => body,
+  },
+  pollo: {
+    mapStatus: (body) => {
+      const status = body.status?.toLowerCase();
+      const statusMap: Record<string, AITaskStatus> = {
+        succeed: AITaskStatus.SUCCESS,
+        failed: AITaskStatus.FAILED,
+        processing: AITaskStatus.PROCESSING,
+        pending: AITaskStatus.PENDING,
+      };
+      return statusMap[status] || AITaskStatus.PENDING;
+    },
+    getErrorMessage: (body) => body.failMsg,
+    getTaskInfo: (body, existingInfo) => {
+      const info: AITaskInfo = existingInfo ? { ...existingInfo } : {};
+      
+      if (body.generations && Array.isArray(body.generations)) {
+        const images: AIImage[] = [];
+        const videos: AIVideo[] = [];
+        
+        for (const gen of body.generations) {
+          if (gen.status === 'succeed' && gen.url) {
+            if (gen.mediaType === 'video') {
+              videos.push({
+                id: gen.id,
+                videoUrl: gen.url,
+                createTime: gen.createdDate ? new Date(gen.createdDate) : new Date(),
+              });
+            } else if (gen.mediaType === 'image') {
+              images.push({
+                id: gen.id,
+                imageUrl: gen.url,
+                imageType: gen.mediaType,
+                createTime: gen.createdDate ? new Date(gen.createdDate) : new Date(),
+              });
+            }
+          }
+        }
+        
+        if (images.length > 0) {
+          info.images = images;
+        }
+        if (videos.length > 0) {
+          info.videos = videos;
+        }
+      }
+      
+      return info;
+    },
+    getTaskResult: (body) => body,
   },
 };
 
 function getProviderHandler(provider: string): ProviderHandler {
   return (
     providerHandlers[provider] || {
-      mapStatus: (body) => body.status || AITaskStatus.PENDING,
-      getErrorMessage: () => undefined,
+      mapStatus: (body) => {
+        const status = body.status?.toLowerCase();
+        const statusMap: Record<string, AITaskStatus> = {
+          succeed: AITaskStatus.SUCCESS,
+          success: AITaskStatus.SUCCESS,
+          failed: AITaskStatus.FAILED,
+          fail: AITaskStatus.FAILED,
+          processing: AITaskStatus.PROCESSING,
+          pending: AITaskStatus.PENDING,
+        };
+        return statusMap[status] || AITaskStatus.PENDING;
+      },
+      getErrorMessage: (body) => body.error || body.failMsg || body.msg,
+      getTaskInfo: (body, existingInfo) => existingInfo || {},
+      getTaskResult: (body) => body,
     }
   );
 }
@@ -66,14 +137,17 @@ export async function POST(
 
     // Extract taskId from callback payload
     const taskId = body.taskId || body.id || body.data?.task_id;
+    console.log(`[${provider}] Extracted taskId:`, taskId);
     if (!taskId) {
+      console.error(`[${provider}] taskId not found in callback payload:`, body);
       throw new Error('taskId not found in callback payload');
     }
 
     // Find task in database
     const task = await findAITaskByTaskId(taskId);
+    console.log(`[${provider}] Found task:`, task ? { id: task.id, provider: task.provider, status: task.status } : null);
     if (!task) {
-      console.warn(`Task not found for taskId: ${taskId}`);
+      console.warn(`[${provider}] Task not found for taskId: ${taskId}`);
       return respOk();
     }
 
@@ -91,10 +165,12 @@ export async function POST(
     // Map status using provider-specific handler
     const handler = getProviderHandler(provider);
     const status = handler.mapStatus(body);
+    console.log(`[${provider}] Mapped status:`, status, '| Raw status:', body.status || body.code);
 
     // Store error message if task failed
     if (status === AITaskStatus.FAILED) {
       const errorMessage = handler.getErrorMessage(body);
+      console.log(`[${provider}] Task failed, errorMessage:`, errorMessage);
       if (errorMessage) {
         taskInfo = { ...taskInfo, errorMessage };
       }
@@ -102,29 +178,42 @@ export async function POST(
 
     // Update progress if provided
     if (body.progress !== undefined) {
+      console.log(`[${provider}] Progress update:`, body.progress);
       taskInfo = { ...taskInfo, progress: body.progress };
     }
 
-    // Update result if provided
-    if (body.result) {
-      taskResult = { ...taskResult, ...body.result };
+    // Get provider-specific task info (images/videos)
+    const providerTaskInfo = handler.getTaskInfo(body, taskInfo);
+    console.log(`[${provider}] Provider taskInfo:`, providerTaskInfo);
+    if (providerTaskInfo) {
+      taskInfo = { ...taskInfo, ...providerTaskInfo };
     }
 
-    // Update task in database
-    console.log('更新task:{}', task.id, {
+    // Update result
+    taskResult = handler.getTaskResult(body);
+    console.log(`[${provider}] Provider taskResult:`, taskResult);
+
+    // Prepare update data
+    const updateAITask: UpdateAITask = {
       status,
       taskInfo: taskInfo ? JSON.stringify(taskInfo) : null,
       taskResult: taskResult ? JSON.stringify(taskResult) : null,
       creditId: task.creditId,
-    })
-    // await updateAITaskById(task.id, {
-    //   status,
-    //   taskInfo: taskInfo ? JSON.stringify(taskInfo) : null,
-    //   taskResult: taskResult ? JSON.stringify(taskResult) : null,
-    //   creditId: task.creditId,
-    // });
+    };
 
-    console.log(`Task ${task.id} updated with status: ${status}`);
+    // Only update if data changed
+    if (
+      updateAITask.status !== task.status ||
+      updateAITask.taskInfo !== task.taskInfo ||
+      updateAITask.taskResult !== task.taskResult
+    ) {
+      console.log('更新task:', task.id, updateAITask);
+      await updateAITaskById(task.id, updateAITask);
+      console.log(`Task ${task.id} updated with status: ${status}`);
+    } else {
+      console.log(`Task ${task.id} no changes, skip update`);
+    }
+
     return respOk();
   } catch (e: any) {
     console.error(`Callback processing failed for ${provider}:`, e);
