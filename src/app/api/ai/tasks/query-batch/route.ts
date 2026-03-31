@@ -40,7 +40,10 @@ export async function POST(req: Request) {
         }
 
         if (!aiProvider.query) {
-          results.push({ id: taskId, error: 'query not supported for ai provider' });
+          results.push({
+            id: taskId,
+            error: 'query not supported for ai provider',
+          });
           continue;
         }
 
@@ -59,7 +62,9 @@ export async function POST(req: Request) {
         const updateData = {
           status: result.taskStatus,
           taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
-          taskResult: result.taskResult ? JSON.stringify(result.taskResult) : null,
+          taskResult: result.taskResult
+            ? JSON.stringify(result.taskResult)
+            : null,
           creditId: task.creditId,
         };
 
@@ -71,6 +76,10 @@ export async function POST(req: Request) {
           await updateAITaskById(task.id, updateData);
         }
 
+        // 检查是否需要显示错误弹窗
+        const taskInfoObj = result.taskInfo || {};
+        const showErrorAlert = taskInfoObj.errorCode === 400;
+
         // Return updated task
         results.push({
           id: taskId,
@@ -78,6 +87,8 @@ export async function POST(req: Request) {
           status: updateData.status,
           taskInfo: updateData.taskInfo,
           taskResult: updateData.taskResult,
+          showErrorAlert, // 前端根据这个显示弹窗
+          errorCode: taskInfoObj.errorCode,
         });
       } catch (e: any) {
         console.error(`query task ${taskId} failed:`, e);
