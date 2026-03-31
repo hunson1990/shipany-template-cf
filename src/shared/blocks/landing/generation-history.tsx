@@ -90,7 +90,9 @@ export function GenerationHistory({
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      const response = await fetch(`/api/ai/tasks/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/ai/tasks/${id}`, {
+        method: 'DELETE',
+      });
       if (response.ok) {
         onDeleteTask?.(id);
         toast.success('Video deleted successfully');
@@ -107,42 +109,34 @@ export function GenerationHistory({
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        {/* 骨架屏 Loading */}
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="bg-muted/50 border-border overflow-hidden rounded-lg border"
-          >
-            {/* Header 骨架 */}
-            <div className="border-border border-b p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-6 w-6 rounded-full" />
-                <div className="flex flex-1 items-center gap-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-2" />
-                  <Skeleton className="h-4 w-32" />
-                </div>
-                <Skeleton className="h-5 w-20 rounded" />
-              </div>
+      <div className="bg-muted/50 border-border overflow-hidden rounded-lg border">
+        {/* Header 骨架 */}
+        <div className="border-border border-b p-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="bg-muted-foreground/20 h-6 w-6 rounded-full" />
+            <div className="flex flex-1 items-center gap-2">
+              <Skeleton className="bg-muted-foreground/20 h-4 w-24" />
+              <Skeleton className="bg-muted-foreground/20 h-4 w-2" />
+              <Skeleton className="bg-muted-foreground/20 h-4 w-32" />
             </div>
-            {/* Content 骨架 */}
-            <div className="space-y-4 p-4">
-              <div className="flex gap-3">
-                <Skeleton className="h-12 w-12 flex-shrink-0 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-3/4" />
-                </div>
-              </div>
-              <Skeleton className="h-2 w-full rounded-full" />
-              <div className="flex justify-between">
-                <Skeleton className="h-3 w-48" />
-                <Skeleton className="h-3 w-8" />
-              </div>
+            <Skeleton className="bg-muted-foreground/20 h-5 w-20 rounded" />
+          </div>
+        </div>
+        {/* Content 骨架 */}
+        <div className="space-y-4 p-4">
+          <div className="flex gap-3">
+            <Skeleton className="bg-muted-foreground/20 h-12 w-12 flex-shrink-0 rounded-lg" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="bg-muted-foreground/20 h-3 w-full" />
+              <Skeleton className="bg-muted-foreground/20 h-3 w-3/4" />
             </div>
           </div>
-        ))}
+          <Skeleton className="bg-muted-foreground/20 h-2 w-full rounded-full" />
+          <div className="flex justify-between">
+            <Skeleton className="bg-muted-foreground/20 h-3 w-48" />
+            <Skeleton className="bg-muted-foreground/20 h-3 w-8" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -272,7 +266,7 @@ export function GenerationHistory({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-muted-foreground border-muted hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
+                        className="border-muted text-muted-foreground hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
                         onClick={() => handleDownload(task)}
                       >
                         <RiDownloadLine className="mr-1 h-3 w-3" />
@@ -281,7 +275,7 @@ export function GenerationHistory({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-muted-foreground border-muted hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
+                        className="border-muted text-muted-foreground hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
                         onClick={() => setDeleteConfirmId(task.id)}
                         disabled={deletingId === task.id}
                       >
@@ -322,7 +316,7 @@ export function GenerationHistory({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-muted-foreground border-muted hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
+                        className="border-muted text-muted-foreground hover:bg-primary hover:border-primary h-7 px-2 text-xs hover:text-white"
                         onClick={() => setDeleteConfirmId(task.id)}
                         disabled={deletingId === task.id}
                       >
