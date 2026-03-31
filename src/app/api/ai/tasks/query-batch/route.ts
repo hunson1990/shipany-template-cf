@@ -68,7 +68,7 @@ export async function POST(req: Request) {
           updateData.taskInfo !== task.taskInfo ||
           updateData.taskResult !== task.taskResult
         ) {
-          await updateAITaskById(task.id, updateData);
+          // await updateAITaskById(task.id, updateData);
         }
 
         // Return updated task

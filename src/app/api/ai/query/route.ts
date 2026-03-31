@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       updateAITask.taskInfo !== task.taskInfo ||
       updateAITask.taskResult !== task.taskResult
     ) {
-      // await updateAITaskById(task.id, updateAITask);
+      await updateAITaskById(task.id, updateAITask);
     }
 
     task.status = updateAITask.status || '';
