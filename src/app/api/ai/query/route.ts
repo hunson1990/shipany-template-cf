@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     }
 
     const aiService = await getAIService();
- const aiProvider = aiService.getProvider(task.provider);
+    const aiProvider = aiService.getProvider(task.provider);
     if (!aiProvider) {
       return respErr('invalid ai provider');
     }
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     // update ai task
     const updateAITask: UpdateAITask = {
       status: result.taskStatus,
-    taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
+      taskInfo: result.taskInfo ? JSON.stringify(result.taskInfo) : null,
       taskResult: result.taskResult ? JSON.stringify(result.taskResult) : null,
       creditId: task.creditId, // credit consumption record id
     };
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       updateAITask.taskInfo !== task.taskInfo ||
       updateAITask.taskResult !== task.taskResult
     ) {
-      await updateAITaskById(task.id, updateAITask);
+      // await updateAITaskById(task.id, updateAITask);
     }
 
     task.status = updateAITask.status || '';
