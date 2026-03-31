@@ -78,7 +78,7 @@ export async function POST(req: Request) {
 
         // 检查是否需要显示错误弹窗
         const taskInfoObj = result.taskInfo || {};
-        const showErrorAlert = taskInfoObj.errorCode === 400;
+        const showErrorAlert = String(taskInfoObj.errorCode) === '400';
 
         // Return updated task
         results.push({
