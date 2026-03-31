@@ -55,17 +55,28 @@ export async function findAITaskById(id: string) {
 }
 
 export async function findAITaskByTaskId(taskId: string) {
-  const [result] = await db().select().from(aiTask).where(eq(aiTask.taskId, taskId));
+  const [result] = await db()
+    .select()
+    .from(aiTask)
+    .where(eq(aiTask.taskId, taskId));
   return result;
 }
 
 export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
-  console.log('[updateAITaskById] Start - taskId:', id, 'status:', updateAITask.status);
+  console.log(
+    '[updateAITaskById] Start - taskId:',
+    id,
+    'status:',
+    updateAITask.status
+  );
 
   const result = await db().transaction(async (tx: any) => {
     // 如果任务失败，需要退回已消费的积分
     if (updateAITask.status === AITaskStatus.FAILED && updateAITask.creditId) {
-      console.log('[updateAITaskById] Task FAILED - creditId:', updateAITask.creditId);
+      console.log(
+        '[updateAITaskById] Task FAILED - creditId:',
+        updateAITask.creditId
+      );
 
       // 1. 获取该任务消费的积分记录
       const [consumedCredit] = await tx
@@ -73,32 +84,83 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
         .from(credit)
         .where(eq(credit.id, updateAITask.creditId));
 
-      console.log('[updateAITaskById] Found consumedCredit:', consumedCredit?.id, 'status:', consumedCredit?.status);
+      console.log(
+        '[updateAITaskById] Found consumedCredit:',
+        consumedCredit?.id,
+        'status:',
+        consumedCredit?.status
+      );
 
       if (consumedCredit && consumedCredit.status === CreditStatus.ACTIVE) {
-        console.log('[updateAITaskById] Credit status is ACTIVE, processing refund...');
+        console.log(
+          '[updateAITaskById] Credit status is ACTIVE, processing refund...'
+        );
+        console.log(
+          '[updateAITaskById] UserId:',
+          consumedCredit.userId,
+          'Total cost credits:',
+          consumedCredit.costCredits
+        );
 
         // 2. 解析消费详情，获取所有被消费的积分项
         const consumedItems = JSON.parse(consumedCredit.consumedDetail || '[]');
-        console.log('[updateAITaskById] Consumed items count:', consumedItems.length);
+        console.log(
+          '[updateAITaskById] Consumed items count:',
+          consumedItems.length
+        );
+
+        // 计算退款总额
+        const totalRefund = consumedItems.reduce(
+          (sum: number, item: any) => sum + (item?.creditsConsumed || 0),
+          0
+        );
+        console.log('[updateAITaskById] Total refund credits:', totalRefund);
 
         // 3. 将消费的积分加回到用户账户
         await Promise.all(
-          consumedItems.map((item: any) => {
+          consumedItems.map(async (item: any) => {
             if (item && item.creditId && item.creditsConsumed > 0) {
-              console.log('[updateAITaskById] Refunding credits:', item.creditsConsumed, 'to user account creditId:', item.creditId, '(consumption record creditId:', updateAITask.creditId, ')');
-              return tx
+              // 查询退款前余额
+              const [beforeCredit] = await tx
+                .select()
+                .from(credit)
+                .where(eq(credit.id, item.creditId));
+              const beforeBalance = beforeCredit?.remainingCredits || 0;
+
+              console.log(
+                '[updateAITaskById] Refunding credits:',
+                item.creditsConsumed,
+                'to user account creditId:',
+                item.creditId,
+                'before balance:',
+                beforeBalance
+              );
+
+              await tx
                 .update(credit)
                 .set({
                   remainingCredits: sql`${credit.remainingCredits} + ${item.creditsConsumed}`,
                 })
                 .where(eq(credit.id, item.creditId));
+
+              // 查询退款后余额
+              const [afterCredit] = await tx
+                .select()
+                .from(credit)
+                .where(eq(credit.id, item.creditId));
+              console.log(
+                '[updateAITaskById] Refund completed, new balance:',
+                afterCredit?.remainingCredits
+              );
             }
           })
         );
 
         // 4. 标记该消费记录为已删除（逻辑删除）
-        console.log('[updateAITaskById] Marking credit as DELETED');
+        console.log(
+          '[updateAITaskById] Marking credit as DELETED, total refunded:',
+          totalRefund
+        );
         await tx
           .update(credit)
           .set({
@@ -106,14 +168,21 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
           })
           .where(eq(credit.id, updateAITask.creditId));
       } else {
-        console.log('[updateAITaskById] Credit not found or status is not ACTIVE, skipping refund');
+        console.log(
+          '[updateAITaskById] Credit not found or status is not ACTIVE, skipping refund'
+        );
       }
     } else {
-      console.log('[updateAITaskById] Task not FAILED or no creditId, skipping refund logic');
+      console.log(
+        '[updateAITaskById] Task not FAILED or no creditId, skipping refund logic'
+      );
     }
 
     // 5. 更新任务记录（状态、任务信息、任务结果等）
-    console.log('[updateAITaskById] Updating task record with status:', updateAITask.status);
+    console.log(
+      '[updateAITaskById] Updating task record with status:',
+      updateAITask.status
+    );
     const [result] = await tx
       .update(aiTask)
       .set(updateAITask)
@@ -159,7 +228,7 @@ export async function deleteLogicAITaskById(id: string) {
     .update(aiTask)
     .set({
       deletedAt: new Date(),
-      status: AITaskStatus.DELETED
+      status: AITaskStatus.DELETED,
     })
     .where(eq(aiTask.id, id))
     .returning();
