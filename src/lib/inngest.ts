@@ -7,6 +7,7 @@ import { getAllConfigs } from '@/shared/models/config';
 export const inngest = new Inngest({
   id: 'soul-fuse',
   eventKey: process.env.INNGEST_EVENT_KEY,
+  isDev: process.env.NODE_ENV === 'development',
 });
 
 // Define the upload to R2 function
