@@ -1,5 +1,9 @@
 import { Inngest } from 'inngest';
 
+import { R2Provider } from '@/extensions/storage';
+import { findAITaskByTaskId } from '@/shared/models/ai_task';
+import { getAllConfigs } from '@/shared/models/config';
+
 // Create a client to send and receive events
 export const inngest = new Inngest({
   id: 'soul-fuse',
@@ -25,66 +29,74 @@ export const uploadToR2Function = inngest.createFunction(
     );
 
     try {
-      // Step 1: Download from third-party URL
-      const videoData = await step.run('download-video', async () => {
-        const response = await fetch(videoUrl, {
-          // Timeout for download
-          signal: AbortSignal.timeout(30000),
-        });
+      // Step 1: Get R2 config from database
+      const r2Provider = await step.run('get-r2-config', async () => {
+        const configs = await getAllConfigs();
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to download video: ${response.status} ${response.statusText}`
-          );
+        if (
+          !configs.r2_access_key ||
+          !configs.r2_secret_key ||
+          !configs.r2_bucket_name
+        ) {
+          throw new Error('R2 is not configured in database');
         }
 
-        const contentLength = response.headers.get('content-length');
-        console.log(`[Inngest] Downloaded video size: ${contentLength} bytes`);
+        const accountId = configs.r2_account_id || '';
 
-        return response;
+        return new R2Provider({
+          accountId: accountId,
+          accessKeyId: configs.r2_access_key,
+          secretAccessKey: configs.r2_secret_key,
+          bucket: configs.r2_bucket_name,
+          uploadPath: configs.r2_upload_path || 'ai-media',
+          region: 'auto',
+          endpoint: configs.r2_endpoint,
+          publicDomain: configs.r2_domain,
+        });
       });
 
-      // Step 2: Upload to R2
-      const r2Url = await step.run('upload-to-r2', async () => {
+      // Step 2: Download from third-party URL and upload to R2
+      const uploadResult = await step.run('download-and-upload', async () => {
         const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
-        const key = `ai-media/${mediaType}/${taskId}.${fileExt}`;
+        const key = `${mediaType}/${taskId}.${fileExt}`;
 
-        const uploadResponse = await fetch(
-          `${process.env.R2_UPLOAD_ENDPOINT}/${key}`,
-          {
-            method: 'PUT',
-            body: videoData.body,
-            headers: {
-              'Content-Type':
-                mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
-              Authorization: `Bearer ${process.env.R2_UPLOAD_TOKEN}`,
-            },
-          }
+        console.log(
+          `[Inngest] Downloading from ${videoUrl} and uploading to R2 as ${key}`
         );
 
-        if (!uploadResponse.ok) {
-          throw new Error(`Failed to upload to R2: ${uploadResponse.status}`);
+        const result = await r2Provider.downloadAndUpload({
+          url: videoUrl,
+          key,
+          contentType: mediaType === 'video' ? 'video/mp4' : 'image/jpeg',
+        });
+
+        if (!result.success) {
+          throw new Error(`Upload failed: ${result.error}`);
         }
 
-        const publicUrl = `${process.env.R2_PUBLIC_URL}/${key}`;
-        console.log(`[Inngest] Uploaded to R2: ${publicUrl}`);
-
-        return publicUrl;
+        console.log(`[Inngest] Uploaded to R2: ${result.url}`);
+        return result.url!;
       });
 
       // Step 3: Update database
       await step.run('update-database', async () => {
+        const internalSecret = process.env.INTERNAL_API_SECRET;
+
+        if (!internalSecret) {
+          throw new Error('INTERNAL_API_SECRET is not configured');
+        }
+
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/internal/r2-uploaded`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+              Authorization: `Bearer ${internalSecret}`,
             },
             body: JSON.stringify({
               taskId,
-              r2Url,
+              r2Url: uploadResult,
               mediaType,
               status: 'completed',
             }),
@@ -101,20 +113,28 @@ export const uploadToR2Function = inngest.createFunction(
       return {
         success: true,
         taskId,
-        r2Url,
+        r2Url: uploadResult,
       };
     } catch (error: any) {
       console.error(`[Inngest] Upload failed for task ${taskId}:`, error);
 
       // Update database with failure status
       await step.run('update-failure', async () => {
+        const internalSecret = process.env.INTERNAL_API_SECRET;
+        if (!internalSecret) {
+          console.error(
+            'INTERNAL_API_SECRET is not configured, cannot report failure'
+          );
+          return;
+        }
+
         await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/internal/r2-uploaded`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${process.env.INTERNAL_API_SECRET}`,
+              Authorization: `Bearer ${internalSecret}`,
             },
             body: JSON.stringify({
               taskId,
