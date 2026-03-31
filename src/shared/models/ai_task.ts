@@ -74,7 +74,7 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
     // 如果任务失败，需要退回已消费的积分
     if (updateAITask.status === AITaskStatus.FAILED && updateAITask.creditId) {
       console.log(
-        '[updateAITaskById] Task FAILED - creditId:',
+        '[updateAITaskById] 任务失败，准备退积分 - creditId:',
         updateAITask.creditId
       );
 
@@ -85,36 +85,31 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
         .where(eq(credit.id, updateAITask.creditId));
 
       console.log(
-        '[updateAITaskById] Found consumedCredit:',
+        '[updateAITaskById] 找到消费记录:',
         consumedCredit?.id,
-        'status:',
+        '状态:',
         consumedCredit?.status
       );
 
       if (consumedCredit && consumedCredit.status === CreditStatus.ACTIVE) {
+        console.log('[updateAITaskById] 消费记录状态为 ACTIVE，开始退积分...');
         console.log(
-          '[updateAITaskById] Credit status is ACTIVE, processing refund...'
-        );
-        console.log(
-          '[updateAITaskById] UserId:',
+          '[updateAITaskById] 用户ID:',
           consumedCredit.userId,
-          'Total cost credits:',
+          '消费积分总数:',
           consumedCredit.costCredits
         );
 
         // 2. 解析消费详情，获取所有被消费的积分项
         const consumedItems = JSON.parse(consumedCredit.consumedDetail || '[]');
-        console.log(
-          '[updateAITaskById] Consumed items count:',
-          consumedItems.length
-        );
+        console.log('[updateAITaskById] 消费明细项数:', consumedItems.length);
 
         // 计算退款总额
         const totalRefund = consumedItems.reduce(
           (sum: number, item: any) => sum + (item?.creditsConsumed || 0),
           0
         );
-        console.log('[updateAITaskById] Total refund credits:', totalRefund);
+        console.log('[updateAITaskById] 应退积分总额:', totalRefund);
 
         // 3. 将消费的积分加回到用户账户
         await Promise.all(
@@ -128,11 +123,11 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
               const beforeBalance = beforeCredit?.remainingCredits || 0;
 
               console.log(
-                '[updateAITaskById] Refunding credits:',
+                '[updateAITaskById] 正在退还积分:',
                 item.creditsConsumed,
-                'to user account creditId:',
+                '到用户积分账户 creditId:',
                 item.creditId,
-                'before balance:',
+                '退款前余额:',
                 beforeBalance
               );
 
@@ -149,7 +144,7 @@ export async function updateAITaskById(id: string, updateAITask: UpdateAITask) {
                 .from(credit)
                 .where(eq(credit.id, item.creditId));
               console.log(
-                '[updateAITaskById] Refund completed, new balance:',
+                '[updateAITaskById] 退款完成，新余额:',
                 afterCredit?.remainingCredits
               );
             }
