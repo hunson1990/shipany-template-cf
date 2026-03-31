@@ -76,9 +76,18 @@ export async function POST(req: Request) {
           await updateAITaskById(task.id, updateData);
         }
 
-        // 检查是否需要显示错误弹窗
-        const taskInfoObj = result.taskInfo || {};
-        const showErrorAlert = String(taskInfoObj.errorCode) === '400';
+        // 检查是否需要显示错误弹窗（从 updateData.taskInfo 解析）
+        let showErrorAlert = false;
+        let errorCode: string | number | undefined;
+        if (updateData.taskInfo) {
+          try {
+            const taskInfoObj = JSON.parse(updateData.taskInfo);
+            errorCode = taskInfoObj.errorCode;
+            showErrorAlert = String(errorCode) === '400';
+          } catch {
+            showErrorAlert = false;
+          }
+        }
 
         // Return updated task
         results.push({
@@ -88,7 +97,7 @@ export async function POST(req: Request) {
           taskInfo: updateData.taskInfo,
           taskResult: updateData.taskResult,
           showErrorAlert, // 前端根据这个显示弹窗
-          errorCode: taskInfoObj.errorCode,
+          errorCode, // 从 updateData.taskInfo 解析出的 errorCode
         });
       } catch (e: any) {
         console.error(`query task ${taskId} failed:`, e);
