@@ -74,64 +74,69 @@ export function AppContent({ pricingSection }: AppContentProps) {
     }
   }, []);
 
-  const queryBatchTasks = useCallback(async (taskIds: string[]) => {
-    if (taskIds.length === 0) return;
+  const queryBatchTasks = useCallback(
+    async (taskIds: string[]) => {
+      if (taskIds.length === 0) return;
 
-    try {
-      const response = await fetch('/api/ai/tasks/query-batch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ taskIds }),
-      });
-
-      if (!response.ok) throw new Error('Failed to query tasks');
-      const result = await response.json();
-
-      if (result.code === 0 && result.data) {
-        // 检查是否有 errorCode === 400 的任务
-        const hasNSFWError = result.data.some((updatedTask: any) => {
-          if (updatedTask.taskInfo) {
-            try {
-              const taskInfo = JSON.parse(updatedTask.taskInfo);
-              return String(taskInfo.errorCode) === '400';
-            } catch {
-              return false;
-            }
-          }
-          return false;
+      try {
+        const response = await fetch('/api/ai/tasks/query-batch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ taskIds }),
         });
-        if (hasNSFWError) {
-          setIsNSFWModalOpen(true);
-        }
 
-        setTasks((prevTasks) => {
-          const updatedTasks = [...prevTasks];
-          result.data.forEach((updatedTask: any) => {
-            const index = updatedTasks.findIndex(
-              (t) => t.id === updatedTask.id
-            );
-            if (index !== -1) {
-              updatedTasks[index] = {
-                ...updatedTasks[index],
-                ...updatedTask,
-              };
+        if (!response.ok) throw new Error('Failed to query tasks');
+        const result = await response.json();
+
+        if (result.code === 0 && result.data) {
+          // 检查是否有 errorCode === 400 的任务
+          const hasNSFWError = result.data.some((updatedTask: any) => {
+            if (updatedTask.taskInfo) {
+              try {
+                const taskInfo = JSON.parse(updatedTask.taskInfo);
+                return String(taskInfo.errorCode) === '400';
+              } catch {
+                return false;
+              }
             }
+            return false;
           });
-          return updatedTasks;
-        });
 
-        const stillPending = result.data.filter(
-          (task: any) =>
-            task.status === 'pending' || task.status === 'processing'
-        );
-        setPollingIds(new Set(stillPending.map((task: any) => task.id)));
+          // 如果检测到 NSFW 错误且弹窗未打开，显示弹窗
+          if (hasNSFWError && !isNSFWModalOpen) {
+            setIsNSFWModalOpen(true);
+          }
+
+          setTasks((prevTasks) => {
+            const updatedTasks = [...prevTasks];
+            result.data.forEach((updatedTask: any) => {
+              const index = updatedTasks.findIndex(
+                (t) => t.id === updatedTask.id
+              );
+              if (index !== -1) {
+                updatedTasks[index] = {
+                  ...updatedTasks[index],
+                  ...updatedTask,
+                };
+              }
+            });
+            return updatedTasks;
+          });
+
+          const stillPending = result.data.filter(
+            (task: any) =>
+              task.status === 'pending' || task.status === 'processing'
+          );
+          setPollingIds(new Set(stillPending.map((task: any) => task.id)));
+        }
+      } catch (error) {
+        console.error('Failed to query batch tasks:', error);
       }
-    } catch (error) {
-      console.error('Failed to query batch tasks:', error);
-    }
-  }, []);
+    },
+    [isNSFWModalOpen]
+  );
 
   useEffect(() => {
     pollingIdsRef.current = pollingIds;
@@ -144,20 +149,32 @@ export function AppContent({ pricingSection }: AppContentProps) {
     }
   }, [fetchTasks]);
 
+  // 轮询逻辑：使用 setTimeout 替代 setInterval，避免请求堆积
   useEffect(() => {
-    const hasPollingTasks = pollingIds.size > 0;
-    if (!hasPollingTasks) return;
+    let timeoutId: NodeJS.Timeout;
+    let isActive = true;
 
-    queryBatchTasks(Array.from(pollingIds));
+    const poll = async () => {
+      const currentPollingIds = Array.from(pollingIdsRef.current);
+      if (currentPollingIds.length === 0 || !isActive) return;
 
-    const interval = setInterval(() => {
-      queryBatchTasks(Array.from(pollingIdsRef.current));
-    }, 3000);
+      await queryBatchTasks(currentPollingIds);
+
+      if (!isActive) return;
+
+      // 请求完成后，再设置下一次轮询（至少间隔 3 秒）
+      timeoutId = setTimeout(poll, 3000);
+    };
+
+    if (pollingIds.size > 0) {
+      poll();
+    }
 
     return () => {
-      clearInterval(interval);
+      isActive = false;
+      clearTimeout(timeoutId);
     };
-  }, [pollingIds.size > 0, queryBatchTasks]);
+  }, [pollingIds.size, queryBatchTasks]);
 
   useEffect(() => {
     if (isShowPaymentModal && !isPricingModalOpen) {
@@ -271,12 +288,10 @@ export function AppContent({ pricingSection }: AppContentProps) {
             <div className="flex justify-end">
               <button
                 onClick={() => {
-                  // 移动端如果在 History tab，先切换到 Create tab
                   const isMobile = window.innerWidth < 1024;
                   if (isMobile && activeTab !== 'create') {
                     setActiveTab('create');
                   }
-                  // 延迟设置模型，确保组件已渲染
                   setTimeout(() => {
                     setForceModelId('soul-fuse-v1-6');
                   }, 100);
