@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { GenerationControlMobile } from '@/shared/blocks/landing/generation-control/mobile';
 import { GenerationControlPC } from '@/shared/blocks/landing/generation-control/pc';
@@ -39,6 +39,7 @@ interface AppContentProps {
 
 export function AppContent({ pricingSection }: AppContentProps) {
   const { isShowPaymentModal, setIsShowPaymentModal } = useAppContext();
+  const t = useTranslations('common');
 
   const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
   const [tasks, setTasks] = useState<AITask[]>([]);
@@ -47,6 +48,8 @@ export function AppContent({ pricingSection }: AppContentProps) {
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const pollingIdsRef = useRef<Set<string>>(new Set());
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+  const [isNSFWModalOpen, setIsNSFWModalOpen] = useState(false);
+  const [forceModelId, setForceModelId] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -88,23 +91,20 @@ export function AppContent({ pricingSection }: AppContentProps) {
 
       if (result.code === 0 && result.data) {
         // 检查是否有 errorCode === 400 的任务
-        result.data.forEach((updatedTask: any) => {
+        const hasNSFWError = result.data.some((updatedTask: any) => {
           if (updatedTask.taskInfo) {
             try {
               const taskInfo = JSON.parse(updatedTask.taskInfo);
-              if (String(taskInfo.errorCode) === '400') {
-                toast.error(
-                  `任务 ${updatedTask.taskId} 失败: ${taskInfo.errorMessage || '请求参数错误'}`,
-                  {
-                    duration: 5000,
-                  }
-                );
-              }
+              return String(taskInfo.errorCode) === '400';
             } catch {
-              // 解析失败，忽略
+              return false;
             }
           }
+          return false;
         });
+        if (hasNSFWError) {
+          setIsNSFWModalOpen(true);
+        }
 
         setTasks((prevTasks) => {
           const updatedTasks = [...prevTasks];
@@ -197,7 +197,11 @@ export function AppContent({ pricingSection }: AppContentProps) {
             />
           </div>
         </div>
-        <GenerationControlPC onGenerationComplete={handleGenerationComplete} />
+        <GenerationControlPC
+          onGenerationComplete={handleGenerationComplete}
+          forceModelId={forceModelId}
+          onModelForced={() => setForceModelId(null)}
+        />
       </div>
 
       <div className="bg-background flex min-h-screen flex-col lg:hidden">
@@ -228,6 +232,8 @@ export function AppContent({ pricingSection }: AppContentProps) {
           {activeTab === 'create' && (
             <GenerationControlMobile
               onGenerationComplete={handleGenerationComplete}
+              forceModelId={forceModelId}
+              onModelForced={() => setForceModelId(null)}
             />
           )}
           {activeTab === 'history' && (
@@ -250,6 +256,38 @@ export function AppContent({ pricingSection }: AppContentProps) {
             className="py-8 md:py-10"
             showHeader={false}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isNSFWModalOpen} onOpenChange={setIsNSFWModalOpen}>
+        <DialogContent className="w-[90vw] max-w-md p-6">
+          <DialogTitle className="text-lg font-semibold">
+            {t('nsfw_modal.title')}
+          </DialogTitle>
+          <div className="mt-4 space-y-4">
+            <p className="text-muted-foreground text-sm">
+              {t('nsfw_modal.content')}
+            </p>
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  // 移动端如果在 History tab，先切换到 Create tab
+                  const isMobile = window.innerWidth < 1024;
+                  if (isMobile && activeTab !== 'create') {
+                    setActiveTab('create');
+                  }
+                  // 延迟设置模型，确保组件已渲染
+                  setTimeout(() => {
+                    setForceModelId('soul-fuse-v1-6');
+                  }, 100);
+                  setIsNSFWModalOpen(false);
+                }}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                {t('nsfw_modal.switch_model')}
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

@@ -1,27 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/shared/components/ui/button';
-import { RiImageAddLine, RiMagicLine, RiCoinsLine } from 'react-icons/ri';
-import { ZoomIn, Trash2, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import { ModelSelector } from '../model-selector';
-import ImageEditModal from '../image-edit-modal';
-import { useImageUpload } from '@/shared/context/ImageUploadContext';
-import { useAppContext } from '@/shared/contexts/app';
+import { useEffect, useState } from 'react';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
+import { Loader2, Trash2, ZoomIn } from 'lucide-react';
+import { RiCoinsLine, RiImageAddLine, RiMagicLine } from 'react-icons/ri';
 import { toast } from 'sonner';
+
+import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { useImageUpload } from '@/shared/context/ImageUploadContext';
+import { useAppContext } from '@/shared/contexts/app';
+
+import ImageEditModal from '../image-edit-modal';
+import { ModelSelector } from '../model-selector';
 
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
 export function GenerationControlMobile({
   onGenerationComplete,
+  forceModelId,
+  onModelForced,
 }: {
   onGenerationComplete?: () => void;
+  forceModelId?: string | null;
+  onModelForced?: () => void;
 }) {
-  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
+  const {
+    imageFile,
+    imagePreviewUrl,
+    shouldOpenEditModal,
+    initialPrompt,
+    deviceType,
+    closeEditModal,
+  } = useImageUpload();
   const { user, setIsShowSignModal, setIsShowPaymentModal } = useAppContext();
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
   const [prompt, setPrompt] = useState('');
@@ -29,7 +47,9 @@ export function GenerationControlMobile({
   const [imagePreviewUrlState, setImagePreviewUrlState] = useState<string>('');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [pendingImageFile, setPendingImageFile] = useState<File | null>(null);
-  const [resolution, setResolution] = useState<string>(selectedModel.resolution[0]);
+  const [resolution, setResolution] = useState<string>(
+    selectedModel.resolution[0]
+  );
   const [duration, setDuration] = useState<number>(selectedModel.duration[0]);
   const [isUploading, setIsUploading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -38,18 +58,45 @@ export function GenerationControlMobile({
 
   // Update cost credits when model, resolution, or duration change
   useEffect(() => {
-    const newCost = calculateRequiredCredits(selectedModel, resolution, duration);
+    const newCost = calculateRequiredCredits(
+      selectedModel,
+      resolution,
+      duration
+    );
     setCostCredits(newCost);
   }, [selectedModel, resolution, duration]);
 
+  // Force model change when forceModelId is set
+  useEffect(() => {
+    if (forceModelId) {
+      const targetModel = MODELS.find((m) => m.id === forceModelId);
+      if (targetModel) {
+        setSelectedModel(targetModel);
+
+      }
+      onModelForced?.();
+    }
+  }, [forceModelId, onModelForced]);
+
   // Open edit modal when coming from homepage (only on mobile)
   useEffect(() => {
-    if (shouldOpenEditModal && deviceType === 'mobile' && imageFile && imagePreviewUrl) {
+    if (
+      shouldOpenEditModal &&
+      deviceType === 'mobile' &&
+      imageFile &&
+      imagePreviewUrl
+    ) {
       setIsEditModalOpen(true);
       setPendingImageFile(imageFile);
       setPrompt(initialPrompt);
     }
-  }, [shouldOpenEditModal, deviceType, imageFile, imagePreviewUrl, initialPrompt]);
+  }, [
+    shouldOpenEditModal,
+    deviceType,
+    imageFile,
+    imagePreviewUrl,
+    initialPrompt,
+  ]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,11 +262,11 @@ export function GenerationControlMobile({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-3 space-y-4 flex-1 overflow-y-auto">
+    <div className="flex h-full flex-col">
+      <div className="flex-1 space-y-4 overflow-y-auto p-3">
         {/* Model Selection */}
         <div>
-          <label className="text-sm font-medium block mb-1">Model</label>
+          <label className="mb-1 block text-sm font-medium">Model</label>
           <ModelSelector
             models={MODELS}
             selectedModel={selectedModel}
@@ -230,36 +277,40 @@ export function GenerationControlMobile({
 
         {/* Image Upload */}
         <div>
-          <label className="text-sm font-medium block mb-1">Image</label>
+          <label className="mb-1 block text-sm font-medium">Image</label>
           <div
-            className="border-2 border-dashed border-muted-foreground/30 rounded-lg text-center hover:border-primary/50 transition-colors cursor-pointer relative overflow-hidden w-full h-40 bg-muted/10"
-            onClick={() => !isUploading && !imagePreviewUrlState && document.getElementById('image-input-mobile')?.click()}
+            className="border-muted-foreground/30 hover:border-primary/50 bg-muted/10 relative h-40 w-full cursor-pointer overflow-hidden rounded-lg border-2 border-dashed text-center transition-colors"
+            onClick={() =>
+              !isUploading &&
+              !imagePreviewUrlState &&
+              document.getElementById('image-input-mobile')?.click()
+            }
           >
             {isUploading && (
-              <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center">
+                <Loader2 className="text-primary h-6 w-6 animate-spin" />
                 <span className="ml-2 text-sm">Uploading...</span>
               </div>
             )}
 
             {imagePreviewUrlState ? (
-              <div className="relative w-full h-full group">
+              <div className="group relative h-full w-full">
                 <img
                   src={imagePreviewUrlState}
                   alt="Uploaded"
-                  className="w-full h-full object-contain"
+                  className="h-full w-full object-contain"
                 />
                 {/* Image operation buttons */}
                 {!isUploading && (
                   <div
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex space-x-2 opacity-100 transition-opacity z-40"
+                    className="absolute top-1/2 left-1/2 z-40 flex -translate-x-1/2 -translate-y-1/2 transform space-x-2 opacity-100 transition-opacity"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Button
                       size="icon"
                       variant="secondary"
                       onClick={handleImagePreview}
-                      className="bg-black/70 hover:bg-black/90 text-white border-0 w-8 h-8 z-50"
+                      className="z-50 h-8 w-8 border-0 bg-black/70 text-white hover:bg-black/90"
                       title="Zoom to view"
                     >
                       <ZoomIn className="h-4 w-4" />
@@ -268,7 +319,7 @@ export function GenerationControlMobile({
                       size="icon"
                       variant="secondary"
                       onClick={handleImageDelete}
-                      className="bg-black/70 hover:bg-black/90 text-white border-0 w-8 h-8 z-50"
+                      className="z-50 h-8 w-8 border-0 bg-black/70 text-white hover:bg-black/90"
                       title="Delete image"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -278,8 +329,10 @@ export function GenerationControlMobile({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8">
-                <RiImageAddLine className="w-8 h-8 text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">Click to upload an image</p>
+                <RiImageAddLine className="text-muted-foreground mb-2 h-8 w-8" />
+                <p className="text-muted-foreground text-sm">
+                  Click to upload an image
+                </p>
               </div>
             )}
             <input
@@ -291,23 +344,24 @@ export function GenerationControlMobile({
               disabled={isUploading}
             />
           </div>
-          <p className="text-xs text-muted-foreground/60 mt-1">
-            Upload JPG/PNG/WEBP images up to 10MB, with a minimum width/height of 300px.
+          <p className="text-muted-foreground/60 mt-1 text-xs">
+            Upload JPG/PNG/WEBP images up to 10MB, with a minimum width/height
+            of 300px.
           </p>
         </div>
 
         {/* Prompt */}
         <div>
-          <label className="text-sm font-medium block mb-1">Prompt</label>
+          <label className="mb-1 block text-sm font-medium">Prompt</label>
           <div className="relative">
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="What do you want to create with this image?"
-              className="w-full bg-muted/20 border border-border rounded-lg p-3 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
+              className="bg-muted/20 border-border focus:ring-primary w-full resize-none rounded-lg border p-3 text-sm focus:ring-1 focus:outline-none"
               rows={4}
             />
-            <span className="absolute bottom-2 right-3 text-xs text-muted-foreground/60">
+            <span className="text-muted-foreground/60 absolute right-3 bottom-2 text-xs">
               {prompt.length} / 2000
             </span>
           </div>
@@ -315,12 +369,12 @@ export function GenerationControlMobile({
 
         {/* Resolution */}
         <div>
-          <label className="text-sm font-medium block mb-1">Resolution</label>
+          <label className="mb-1 block text-sm font-medium">Resolution</label>
           <div className="flex gap-2">
             {selectedModel.resolution.map((res) => (
               <Button
                 key={res}
-                variant={resolution === res ? "default" : "outline"}
+                variant={resolution === res ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setResolution(res)}
                 className="flex-1 text-xs"
@@ -333,12 +387,12 @@ export function GenerationControlMobile({
 
         {/* Duration */}
         <div>
-          <label className="text-sm font-medium block mb-1">Duration</label>
+          <label className="mb-1 block text-sm font-medium">Duration</label>
           <div className="flex gap-2">
             {selectedModel.duration.map((dur) => (
               <Button
                 key={dur}
-                variant={duration === dur ? "default" : "outline"}
+                variant={duration === dur ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setDuration(dur)}
                 className="flex-1 text-xs"
@@ -351,23 +405,29 @@ export function GenerationControlMobile({
       </div>
 
       {/* Bottom Section - Credits and Create Button (Fixed) */}
-      <div className="fixed bottom-0 left-0 right-0 p-3 space-y-2 border-t border-border bg-background">
+      <div className="border-border bg-background fixed right-0 bottom-0 left-0 space-y-2 border-t p-3">
         {/* Credits */}
-        <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+        <div className="bg-muted/20 flex items-center justify-between rounded-lg p-3">
           <div className="flex items-center gap-2">
-            <RiCoinsLine className="w-4 h-4 text-yellow-500" />
-            <span className="text-sm text-muted-foreground/90">Credits required:</span>
+            <RiCoinsLine className="h-4 w-4 text-yellow-500" />
+            <span className="text-muted-foreground/90 text-sm">
+              Credits required:
+            </span>
           </div>
-          <span className="text-sm font-medium text-muted-foreground/90">{costCredits} Credits</span>
+          <span className="text-muted-foreground/90 text-sm font-medium">
+            {costCredits} Credits
+          </span>
         </div>
 
         {/* Create Button */}
         <Button
           onClick={handleCreate}
-          disabled={!uploadedImage || !prompt.trim() || isUploading || isCreating}
-          className="w-full bg-primary hover:bg-primary/90 text-white h-10"
+          disabled={
+            !uploadedImage || !prompt.trim() || isUploading || isCreating
+          }
+          className="bg-primary hover:bg-primary/90 h-10 w-full text-white"
         >
-          <RiMagicLine className="w-4 h-4 mr-2" />
+          <RiMagicLine className="mr-2 h-4 w-4" />
           {isCreating ? 'Creating...' : 'Create'}
         </Button>
       </div>
@@ -376,22 +436,24 @@ export function GenerationControlMobile({
       <ImageEditModal
         isOpen={isEditModalOpen}
         imageFile={pendingImageFile}
-        existingImageUrl={pendingImageFile ? undefined : (imagePreviewUrl ?? undefined)}
+        existingImageUrl={
+          pendingImageFile ? undefined : (imagePreviewUrl ?? undefined)
+        }
         onClose={handleEditClose}
         onConfirm={handleEditConfirm}
       />
 
       {/* Image zoom preview modal */}
       <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-4">
+        <DialogContent className="max-h-[90vh] max-w-4xl p-4">
           <DialogHeader>
             <DialogTitle>Image Preview</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center max-h-[80vh]">
+          <div className="flex max-h-[80vh] items-center justify-center">
             <img
               src={imagePreviewUrlState}
               alt="Image preview"
-              className="max-w-full max-h-full object-contain rounded-md"
+              className="max-h-full max-w-full rounded-md object-contain"
             />
           </div>
         </DialogContent>

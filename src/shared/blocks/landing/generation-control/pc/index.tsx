@@ -1,29 +1,47 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/shared/components/ui/button';
-import { RiImageAddLine, RiArrowUpLine } from 'react-icons/ri';
-import { ZoomIn, Trash2, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/shared/components/ui/dialog';
-import { ModelSelector } from '../model-selector';
-import { VideoOptionsSelector, VideoOptions } from '../video-options-selector';
-import ImageEditModal from '../image-edit-modal';
-import { useImageUpload } from '@/shared/context/ImageUploadContext';
-import { useAppContext } from '@/shared/contexts/app';
+import { useEffect, useState } from 'react';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
+import { Loader2, Trash2, ZoomIn } from 'lucide-react';
+import { RiArrowUpLine, RiImageAddLine } from 'react-icons/ri';
 import { toast } from 'sonner';
+
+import { Button } from '@/shared/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { useImageUpload } from '@/shared/context/ImageUploadContext';
+import { useAppContext } from '@/shared/contexts/app';
+
+import ImageEditModal from '../image-edit-modal';
+import { ModelSelector } from '../model-selector';
+import { VideoOptions, VideoOptionsSelector } from '../video-options-selector';
 
 // Convert models object to array
 const MODELS: ModelOption[] = Object.values(ImageToVideoModels);
 
 export function GenerationControlPC({
   onGenerationComplete,
+  forceModelId,
+  onModelForced,
 }: {
   onGenerationComplete?: () => void;
+  forceModelId?: string | null;
+  onModelForced?: () => void;
 }) {
-  const { imageFile, imagePreviewUrl, shouldOpenEditModal, initialPrompt, deviceType, closeEditModal } = useImageUpload();
+  const {
+    imageFile,
+    imagePreviewUrl,
+    shouldOpenEditModal,
+    initialPrompt,
+    deviceType,
+    closeEditModal,
+  } = useImageUpload();
   const { user, setIsShowSignModal, setIsShowPaymentModal } = useAppContext();
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState<ModelOption>(MODELS[0]);
@@ -43,18 +61,45 @@ export function GenerationControlPC({
 
   // Update cost credits when model or video options change
   useEffect(() => {
-    const newCost = calculateRequiredCredits(selectedModel, videoOptions.resolution, videoOptions.duration);
+    const newCost = calculateRequiredCredits(
+      selectedModel,
+      videoOptions.resolution,
+      videoOptions.duration
+    );
     setCostCredits(newCost);
   }, [selectedModel, videoOptions]);
 
+  // Force model change when forceModelId is set
+  useEffect(() => {
+    if (forceModelId) {
+      const targetModel = MODELS.find((m) => m.id === forceModelId);
+      if (targetModel) {
+        setSelectedModel(targetModel);
+
+      }
+      onModelForced?.();
+    }
+  }, [forceModelId, onModelForced]);
+
   // Open edit modal when coming from homepage (only on PC)
   useEffect(() => {
-    if (shouldOpenEditModal && deviceType === 'pc' && imageFile && imagePreviewUrl) {
+    if (
+      shouldOpenEditModal &&
+      deviceType === 'pc' &&
+      imageFile &&
+      imagePreviewUrl
+    ) {
       setIsEditModalOpen(true);
       setPendingImageFile(imageFile);
       setPrompt(initialPrompt);
     }
-  }, [shouldOpenEditModal, deviceType, imageFile, imagePreviewUrl, initialPrompt]);
+  }, [
+    shouldOpenEditModal,
+    deviceType,
+    imageFile,
+    imagePreviewUrl,
+    initialPrompt,
+  ]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -215,40 +260,44 @@ export function GenerationControlPC({
   };
 
   return (
-    <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-8">
+    <div className="fixed right-0 bottom-4 left-0 z-50 flex justify-center px-8">
       <div className="w-full max-w-6xl">
-        <div className="bg-background/30 border border-border/80 border-t-border rounded-[32px] p-4 backdrop-blur-xl">
+        <div className="bg-background/30 border-border/80 border-t-border rounded-[32px] border p-4 backdrop-blur-xl">
           <div className="space-y-3">
             {/* First Row: Image Upload + Textarea */}
             <div className="flex items-start gap-3">
               {/* Image Upload Button */}
               <div
-                className="flex-shrink-0 w-20 h-20 border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center hover:border-primary/50 transition-colors cursor-pointer relative overflow-hidden bg-muted/10 group"
-                onClick={() => !isUploading && !imagePreviewUrlState && document.getElementById('image-input-pc')?.click()}
+                className="border-muted-foreground/30 hover:border-primary/50 bg-muted/10 group relative flex h-20 w-20 flex-shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed transition-colors"
+                onClick={() =>
+                  !isUploading &&
+                  !imagePreviewUrlState &&
+                  document.getElementById('image-input-pc')?.click()
+                }
               >
                 {isUploading && (
-                  <div className="absolute inset-0 bg-background/80 flex items-center justify-center z-10">
-                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <div className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center">
+                    <Loader2 className="text-primary h-4 w-4 animate-spin" />
                   </div>
                 )}
 
                 {imagePreviewUrlState ? (
-                  <div className="relative w-full h-full">
+                  <div className="relative h-full w-full">
                     <img
                       src={imagePreviewUrlState}
                       alt="Uploaded"
-                      className="w-full h-full object-contain"
+                      className="h-full w-full object-contain"
                     />
                     {!isUploading && (
                       <div
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1 z-40"
+                        className="absolute inset-0 z-40 flex items-center justify-center gap-1 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Button
                           size="icon"
                           variant="secondary"
                           onClick={handleImagePreview}
-                          className="bg-black/70 hover:bg-black/90 text-white border-0 w-6 h-6 z-50"
+                          className="z-50 h-6 w-6 border-0 bg-black/70 text-white hover:bg-black/90"
                           title="Zoom to view"
                         >
                           <ZoomIn className="h-3 w-3" />
@@ -257,7 +306,7 @@ export function GenerationControlPC({
                           size="icon"
                           variant="secondary"
                           onClick={handleImageDelete}
-                          className="bg-black/70 hover:bg-black/90 text-white border-0 w-6 h-6 z-50"
+                          className="z-50 h-6 w-6 border-0 bg-black/70 text-white hover:bg-black/90"
                           title="Delete image"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -266,7 +315,7 @@ export function GenerationControlPC({
                     )}
                   </div>
                 ) : (
-                  <RiImageAddLine className="w-7 h-7 text-muted-foreground" />
+                  <RiImageAddLine className="text-muted-foreground h-7 w-7" />
                 )}
 
                 <input
@@ -285,7 +334,7 @@ export function GenerationControlPC({
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Enter your idea to generate"
-                  className="w-full !bg-transparent border-0 outline-none px-4 py-3 text-sm resize-none placeholder:text-muted-foreground focus:ring-0"
+                  className="placeholder:text-muted-foreground w-full resize-none border-0 !bg-transparent px-4 py-3 text-sm outline-none focus:ring-0"
                   style={{ background: 'transparent' }}
                   rows={3}
                   onKeyDown={(e) => {
@@ -318,7 +367,7 @@ export function GenerationControlPC({
               <Button
                 variant="outline"
                 size="sm"
-                className="bg-background border-border text-sm h-9 px-3"
+                className="bg-background border-border h-9 px-3 text-sm"
               >
                 ⋯
               </Button>
@@ -327,21 +376,23 @@ export function GenerationControlPC({
               <div className="flex-1" />
 
               {/* Credits */}
-              <div className="text-sm text-muted-foreground px-3">
+              <div className="text-muted-foreground px-3 text-sm">
                 {costCredits} Credits
               </div>
 
               {/* Submit Button */}
               <Button
                 size="sm"
-                className="bg-primary hover:bg-primary/90 text-white h-9 w-9 p-0"
+                className="bg-primary hover:bg-primary/90 h-9 w-9 p-0 text-white"
                 onClick={handleSubmit}
-                disabled={!prompt.trim() || !uploadedImage || isUploading || isCreating}
+                disabled={
+                  !prompt.trim() || !uploadedImage || isUploading || isCreating
+                }
               >
                 {isCreating ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <RiArrowUpLine className="w-5 h-5" />
+                  <RiArrowUpLine className="h-5 w-5" />
                 )}
               </Button>
             </div>
@@ -360,15 +411,15 @@ export function GenerationControlPC({
 
       {/* Image zoom preview modal */}
       <Dialog open={showImagePreview} onOpenChange={setShowImagePreview}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-4">
+        <DialogContent className="max-h-[90vh] max-w-4xl p-4">
           <DialogHeader>
             <DialogTitle>Image Preview</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center max-h-[80vh]">
+          <div className="flex max-h-[80vh] items-center justify-center">
             <img
               src={imagePreviewUrlState}
               alt="Image preview"
-              className="max-w-full max-h-full object-contain rounded-md"
+              className="max-h-full max-w-full rounded-md object-contain"
             />
           </div>
         </DialogContent>

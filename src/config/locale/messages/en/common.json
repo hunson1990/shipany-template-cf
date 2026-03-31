@@ -52,5 +52,10 @@
   "locale_detector": {
     "title": "We detected your browser language is {locale}. Switch to it?",
     "switch_to": "Switch to {locale}"
+  },
+  "nsfw_modal": {
+    "title": "Notice",
+    "content": "Your video prompt contains NSFW content. Please switch to our SoulFuse self-developed model.",
+    "switch_model": "Switch Model"
   }
 }

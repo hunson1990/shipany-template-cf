@@ -52,5 +52,10 @@
   "locale_detector": {
     "title": "检测到浏览器语言是: {locale}，是否切换？",
     "switch_to": "切换到{locale}"
+  },
+  "nsfw_modal": {
+    "title": "提示",
+    "content": "您的视频创作提示包含NSFW内容，请切换我们soulfuse的自研模型。",
+    "switch_model": "切换模型"
   }
 }
