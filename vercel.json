@@ -20,6 +20,9 @@
     },
     "src/app/api/storage/**/*.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/inngest/**/*.ts": {
+      "maxDuration": 300
     }
   },
   "crons": []

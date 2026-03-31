@@ -1,6 +1,12 @@
-import { respOk, respErr } from '@/shared/lib/resp';
-import { findAITaskByTaskId, updateAITaskById, UpdateAITask } from '@/shared/models/ai_task';
-import { AITaskStatus, AITaskInfo, AIImage, AIVideo } from '@/extensions/ai';
+import { inngest } from '@/lib/inngest';
+
+import { AIImage, AITaskInfo, AITaskStatus, AIVideo } from '@/extensions/ai';
+import { respErr, respOk } from '@/shared/lib/resp';
+import {
+  findAITaskByTaskId,
+  UpdateAITask,
+  updateAITaskById,
+} from '@/shared/models/ai_task';
 
 interface ProviderHandler {
   mapStatus(body: any): AITaskStatus;
@@ -20,24 +26,24 @@ const providerHandlers: Record<string, ProviderHandler> = {
     getTaskInfo: (body, existingInfo) => {
       const info: AITaskInfo = existingInfo ? { ...existingInfo } : {};
       const data = body.data;
-      
+
       if (data) {
         const images: AIImage[] = [];
         const videos: AIVideo[] = [];
-        
+
         if (data.image_url) {
           images.push({
             imageUrl: data.image_url,
             imageType: 'image',
           });
         }
-        
+
         if (data.video_url) {
           videos.push({
             videoUrl: data.video_url,
           });
         }
-        
+
         if (images.length > 0) {
           info.images = images;
         }
@@ -45,7 +51,7 @@ const providerHandlers: Record<string, ProviderHandler> = {
           info.videos = videos;
         }
       }
-      
+
       return info;
     },
     getTaskResult: (body) => body,
@@ -95,30 +101,34 @@ const providerHandlers: Record<string, ProviderHandler> = {
     getErrorMessage: (body) => body.failMsg,
     getTaskInfo: (body, existingInfo) => {
       const info: AITaskInfo = existingInfo ? { ...existingInfo } : {};
-      
+
       if (body.generations && Array.isArray(body.generations)) {
         const images: AIImage[] = [];
         const videos: AIVideo[] = [];
-        
+
         for (const gen of body.generations) {
           if (gen.status === 'succeed' && gen.url) {
             if (gen.mediaType === 'video') {
               videos.push({
                 id: gen.id,
                 videoUrl: gen.url,
-                createTime: gen.createdDate ? new Date(gen.createdDate) : new Date(),
+                createTime: gen.createdDate
+                  ? new Date(gen.createdDate)
+                  : new Date(),
               });
             } else if (gen.mediaType === 'image') {
               images.push({
                 id: gen.id,
                 imageUrl: gen.url,
                 imageType: gen.mediaType,
-                createTime: gen.createdDate ? new Date(gen.createdDate) : new Date(),
+                createTime: gen.createdDate
+                  ? new Date(gen.createdDate)
+                  : new Date(),
               });
             }
           }
         }
-        
+
         if (images.length > 0) {
           info.images = images;
         }
@@ -126,7 +136,7 @@ const providerHandlers: Record<string, ProviderHandler> = {
           info.videos = videos;
         }
       }
-      
+
       return info;
     },
     getTaskResult: (body) => body,
@@ -169,13 +179,21 @@ export async function POST(
     const taskId = body.taskId || body.id || body.data?.task_id;
     console.log(`[${provider}] Extracted taskId:`, taskId);
     if (!taskId) {
-      console.error(`[${provider}] taskId not found in callback payload:`, body);
+      console.error(
+        `[${provider}] taskId not found in callback payload:`,
+        body
+      );
       throw new Error('taskId not found in callback payload');
     }
 
     // Find task in database
     const task = await findAITaskByTaskId(taskId);
-    console.log(`[${provider}] Found task:`, task ? { id: task.id, provider: task.provider, status: task.status } : null);
+    console.log(
+      `[${provider}] Found task:`,
+      task
+        ? { id: task.id, provider: task.provider, status: task.status }
+        : null
+    );
     if (!task) {
       console.warn(`[${provider}] Task not found for taskId: ${taskId}`);
       return respOk();
@@ -195,7 +213,12 @@ export async function POST(
     // Map status using provider-specific handler
     const handler = getProviderHandler(provider);
     const status = handler.mapStatus(body);
-    console.log(`[${provider}] Mapped status:`, status, '| Raw status:', body.status || body.code);
+    console.log(
+      `[${provider}] Mapped status:`,
+      status,
+      '| Raw status:',
+      body.status || body.code
+    );
 
     // Store error message if task failed
     if (status === AITaskStatus.FAILED) {
@@ -242,6 +265,38 @@ export async function POST(
       console.log(`Task ${task.id} updated with status: ${status}`);
     } else {
       console.log(`Task ${task.id} no changes, skip update`);
+    }
+
+    // Trigger R2 upload for successful video/image tasks
+    if (status === AITaskStatus.SUCCESS && taskInfo) {
+      const videoUrl = taskInfo.videos?.[0]?.videoUrl;
+      const imageUrl = taskInfo.images?.[0]?.imageUrl;
+      const mediaUrl = videoUrl || imageUrl;
+      const mediaType = videoUrl ? 'video' : imageUrl ? 'image' : null;
+
+      if (mediaUrl && mediaType) {
+        console.log(
+          `[${provider}] Triggering R2 upload for ${mediaType}:`,
+          mediaUrl
+        );
+
+        // Fire-and-forget: don't await, let Inngest handle it asynchronously
+        inngest
+          .send({
+            name: 'ai/video.upload-to-r2',
+            data: {
+              videoUrl: mediaUrl,
+              taskId: task.taskId,
+              mediaType,
+            },
+          })
+          .catch((err) => {
+            console.error(
+              `[${provider}] Failed to trigger Inngest upload:`,
+              err
+            );
+          });
+      }
     }
 
     return respOk();
