@@ -1,13 +1,19 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useAppContext } from '@/shared/contexts/app';
-import { GenerationHistory } from '@/shared/blocks/landing/generation-history';
-import { GenerationControlPC } from '@/shared/blocks/landing/generation-control/pc';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
+
 import { GenerationControlMobile } from '@/shared/blocks/landing/generation-control/mobile';
-import { Pricing as PricingBlock } from '@/themes/default/blocks/pricing';
-import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog';
+import { GenerationControlPC } from '@/shared/blocks/landing/generation-control/pc';
+import { GenerationHistory } from '@/shared/blocks/landing/generation-history';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/shared/components/ui/dialog';
+import { useAppContext } from '@/shared/contexts/app';
 import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
+import { Pricing as PricingBlock } from '@/themes/default/blocks/pricing';
 
 interface AITask {
   id: string;
@@ -53,7 +59,8 @@ export function AppContent({ pricingSection }: AppContentProps) {
         setHistoryLoaded(true);
 
         const pendingTasks = result.data.filter(
-          (task: AITask) => task.status === 'pending' || task.status === 'processing'
+          (task: AITask) =>
+            task.status === 'pending' || task.status === 'processing'
         );
         setPollingIds(new Set(pendingTasks.map((task: AITask) => task.id)));
       }
@@ -80,10 +87,31 @@ export function AppContent({ pricingSection }: AppContentProps) {
       const result = await response.json();
 
       if (result.code === 0 && result.data) {
+        // 检查是否有 errorCode === 400 的任务
+        result.data.forEach((updatedTask: any) => {
+          if (updatedTask.taskInfo) {
+            try {
+              const taskInfo = JSON.parse(updatedTask.taskInfo);
+              if (String(taskInfo.errorCode) === '400') {
+                toast.error(
+                  `任务 ${updatedTask.taskId} 失败: ${taskInfo.errorMessage || '请求参数错误'}`,
+                  {
+                    duration: 5000,
+                  }
+                );
+              }
+            } catch {
+              // 解析失败，忽略
+            }
+          }
+        });
+
         setTasks((prevTasks) => {
           const updatedTasks = [...prevTasks];
           result.data.forEach((updatedTask: any) => {
-            const index = updatedTasks.findIndex((t) => t.id === updatedTask.id);
+            const index = updatedTasks.findIndex(
+              (t) => t.id === updatedTask.id
+            );
             if (index !== -1) {
               updatedTasks[index] = {
                 ...updatedTasks[index],
@@ -95,7 +123,8 @@ export function AppContent({ pricingSection }: AppContentProps) {
         });
 
         const stillPending = result.data.filter(
-          (task: any) => task.status === 'pending' || task.status === 'processing'
+          (task: any) =>
+            task.status === 'pending' || task.status === 'processing'
         );
         setPollingIds(new Set(stillPending.map((task: any) => task.id)));
       }
@@ -158,7 +187,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
 
   return (
     <>
-      <div className="hidden lg:block min-h-screen bg-background pb-48">
+      <div className="bg-background hidden min-h-screen pb-48 lg:block">
         <div className="mx-auto max-w-6xl p-8">
           <div className="p-6">
             <GenerationHistory
@@ -171,11 +200,11 @@ export function AppContent({ pricingSection }: AppContentProps) {
         <GenerationControlPC onGenerationComplete={handleGenerationComplete} />
       </div>
 
-      <div className="lg:hidden min-h-screen bg-background flex flex-col">
-        <div className="fixed top-14 left-0 right-0 flex bg-muted z-40">
+      <div className="bg-background flex min-h-screen flex-col lg:hidden">
+        <div className="bg-muted fixed top-14 right-0 left-0 z-40 flex">
           <button
             onClick={() => handleTabChange('create')}
-            className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
+            className={`flex-1 border-b-2 py-2 text-center text-sm transition-colors ${
               activeTab === 'create'
                 ? 'text-foreground border-primary bg-white/10'
                 : 'text-muted-foreground border-transparent'
@@ -185,7 +214,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
           </button>
           <button
             onClick={() => handleTabChange('history')}
-            className={`flex-1 py-2 text-center transition-colors border-b-2 text-sm ${
+            className={`flex-1 border-b-2 py-2 text-center text-sm transition-colors ${
               activeTab === 'history'
                 ? 'text-foreground border-primary bg-white/10'
                 : 'text-muted-foreground border-transparent'
@@ -195,7 +224,7 @@ export function AppContent({ pricingSection }: AppContentProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto mt-12">
+        <div className="mt-12 flex-1 overflow-y-auto">
           {activeTab === 'create' && (
             <GenerationControlMobile
               onGenerationComplete={handleGenerationComplete}
@@ -214,13 +243,13 @@ export function AppContent({ pricingSection }: AppContentProps) {
       </div>
 
       <Dialog open={isPricingModalOpen} onOpenChange={setIsPricingModalOpen}>
-        <DialogContent className="h-[92vh] w-[98vw] max-w-[98vw] sm:max-w-[98vw] overflow-y-auto p-0">
- <DialogTitle className="sr-only">Pricing</DialogTitle>
+        <DialogContent className="h-[92vh] w-[98vw] max-w-[98vw] overflow-y-auto p-0 sm:max-w-[98vw]">
+          <DialogTitle className="sr-only">Pricing</DialogTitle>
           <PricingBlock
- section={pricingSection}
- className="py-8 md:py-10"
- showHeader={false}
- />
+            section={pricingSection}
+            className="py-8 md:py-10"
+            showHeader={false}
+          />
         </DialogContent>
       </Dialog>
     </>
