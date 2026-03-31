@@ -2,6 +2,13 @@ import { AIImage, AITaskInfo, AIVideo } from '@/extensions/ai';
 import { respErr, respOk } from '@/shared/lib/resp';
 import { findAITaskByTaskId, updateAITaskById } from '@/shared/models/ai_task';
 
+// Extended task info with R2 metadata
+interface TaskInfoWithR2 extends AITaskInfo {
+  r2Status?: string;
+  r2Url?: string;
+  r2Error?: string;
+}
+
 /**
  * Internal API for Inngest to call back after R2 upload completes
  * This is called by the Inngest function after uploading video/image to R2
@@ -35,7 +42,7 @@ export async function POST(req: Request) {
     }
 
     // Parse existing taskInfo
-    let taskInfo: AITaskInfo = task.taskInfo || {};
+    let taskInfo = (task.taskInfo || {}) as TaskInfoWithR2;
     if (typeof taskInfo === 'string') {
       taskInfo = JSON.parse(taskInfo);
     }

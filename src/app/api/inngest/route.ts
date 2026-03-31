@@ -5,5 +5,4 @@ import { serve } from 'inngest/next';
 export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [uploadToR2Function],
-  streaming: 'allow', // Enable streaming for better performance
 });

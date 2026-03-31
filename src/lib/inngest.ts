@@ -1,7 +1,6 @@
 import { Inngest } from 'inngest';
 
 import { R2Provider } from '@/extensions/storage';
-import { findAITaskByTaskId } from '@/shared/models/ai_task';
 import { getAllConfigs } from '@/shared/models/config';
 
 // Create a client to send and receive events
@@ -17,11 +16,12 @@ export const uploadToR2Function = inngest.createFunction(
     name: 'Upload Video to R2',
     retries: 3,
     concurrency: {
-      limit: 5, // Limit concurrent uploads to avoid overwhelming R2
+      limit: 5,
     },
+    triggers: [{ event: 'ai/video.upload-to-r2' }],
   },
-  { event: 'ai/video.upload-to-r2' },
-  async ({ event, step }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async ({ event, step }: any) => {
     const { videoUrl, taskId, mediaType } = event.data;
 
     console.log(
@@ -149,16 +149,3 @@ export const uploadToR2Function = inngest.createFunction(
     }
   }
 );
-
-// Type definitions for events
-declare module 'inngest' {
-  interface Events {
-    'ai/video.upload-to-r2': {
-      data: {
-        videoUrl: string;
-        taskId: string;
-        mediaType: 'video' | 'image';
-      };
-    };
-  }
-}
