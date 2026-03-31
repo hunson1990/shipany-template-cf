@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { AITask } from '@/app/[locale]/app/app-content';
 import { ImageToVideoModels } from '@/lib/image-to-video/constants';
 import { calculateRequiredCredits } from '@/lib/image-to-video/credits';
 import type { ModelOption } from '@/types/image-to-video';
@@ -28,7 +29,7 @@ export function GenerationControlMobile({
   forceModelId,
   onModelForced,
 }: {
-  onGenerationComplete?: () => void;
+  onGenerationComplete?: (newTask?: AITask) => void;
   forceModelId?: string | null;
   onModelForced?: () => void;
 }) {
@@ -72,7 +73,6 @@ export function GenerationControlMobile({
       const targetModel = MODELS.find((m) => m.id === forceModelId);
       if (targetModel) {
         setSelectedModel(targetModel);
-
       }
       onModelForced?.();
     }
@@ -243,7 +243,7 @@ export function GenerationControlMobile({
         toast.success('Video generation started');
         console.log('Generation task created:', result.data);
         // Call the callback to switch to history tab
-        onGenerationComplete?.();
+        onGenerationComplete?.(result.data);
       } else if (
         result.code === -2 ||
         result.message === 'INSUFFICIENT_CREDITS'

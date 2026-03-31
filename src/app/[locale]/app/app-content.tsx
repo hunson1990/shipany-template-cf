@@ -15,7 +15,7 @@ import { useAppContext } from '@/shared/contexts/app';
 import type { Pricing as PricingSection } from '@/shared/types/blocks/pricing';
 import { Pricing as PricingBlock } from '@/themes/default/blocks/pricing';
 
-interface AITask {
+export interface AITask {
   id: string;
   userId: string;
   mediaType: string;
@@ -193,10 +193,19 @@ export function AppContent({ pricingSection }: AppContentProps) {
     [historyLoaded, fetchTasks]
   );
 
-  const handleGenerationComplete = useCallback(() => {
-    setActiveTab('history');
-    fetchTasks();
-  }, [fetchTasks]);
+  const handleGenerationComplete = useCallback(
+    (newTask?: AITask) => {
+      setActiveTab('history');
+      if (newTask) {
+        // 有新任务，添加到列表开头，不刷新整个列表
+        setTasks((prevTasks) => [newTask, ...prevTasks]);
+      } else {
+        // 兼容旧逻辑，没有新任务数据时刷新列表
+        fetchTasks();
+      }
+    },
+    [fetchTasks]
+  );
 
   const handleDeleteTask = useCallback((taskId: string) => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
