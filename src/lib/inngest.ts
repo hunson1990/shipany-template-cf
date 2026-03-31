@@ -32,6 +32,7 @@ export const uploadToR2Function = inngest.createFunction(
     try {
       // Step 1: Get R2 config from database
       const r2Provider = await step.run('get-r2-config', async () => {
+        console.log('[Inngest] Fetching R2 config from database...');
         const configs = await getAllConfigs();
 
         if (
@@ -39,8 +40,19 @@ export const uploadToR2Function = inngest.createFunction(
           !configs.r2_secret_key ||
           !configs.r2_bucket_name
         ) {
+          console.error('[Inngest] R2 config missing:', {
+            hasAccessKey: !!configs.r2_access_key,
+            hasSecretKey: !!configs.r2_secret_key,
+            hasBucket: !!configs.r2_bucket_name,
+          });
           throw new Error('R2 is not configured in database');
         }
+
+        console.log('[Inngest] R2 config loaded:', {
+          bucket: configs.r2_bucket_name,
+          hasEndpoint: !!configs.r2_endpoint,
+          hasDomain: !!configs.r2_domain,
+        });
 
         const accountId = configs.r2_account_id || '';
 
@@ -57,6 +69,7 @@ export const uploadToR2Function = inngest.createFunction(
       });
 
       // Step 2: Download from third-party URL and upload to R2
+      console.log('[Inngest] Step 2: Starting download and upload...');
       const uploadResult = await step.run('download-and-upload', async () => {
         const fileExt = mediaType === 'video' ? 'mp4' : 'jpg';
         const key = `${mediaType}/${taskId}.${fileExt}`;
@@ -76,10 +89,12 @@ export const uploadToR2Function = inngest.createFunction(
         }
 
         console.log(`[Inngest] Uploaded to R2: ${result.url}`);
+        console.log('[Inngest] Step 2: Download and upload completed');
         return result.url!;
       });
 
       // Step 3: Update database
+      console.log('[Inngest] Step 3: Updating database...');
       await step.run('update-database', async () => {
         const internalSecret = process.env.INTERNAL_API_SECRET;
 
@@ -109,6 +124,7 @@ export const uploadToR2Function = inngest.createFunction(
         }
 
         console.log(`[Inngest] Database updated for task ${taskId}`);
+        console.log('[Inngest] Step 3: Database update completed');
       });
 
       return {
