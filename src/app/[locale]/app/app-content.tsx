@@ -199,6 +199,10 @@ export function AppContent({ pricingSection }: AppContentProps) {
       if (newTask) {
         // 有新任务，添加到列表开头，不刷新整个列表
         setTasks((prevTasks) => [newTask, ...prevTasks]);
+        // 如果新任务是 pending/processing 状态，添加到轮询列表
+        if (newTask.status === 'pending' || newTask.status === 'processing') {
+          setPollingIds((prev) => new Set([...prev, newTask.id]));
+        }
       } else {
         // 兼容旧逻辑，没有新任务数据时刷新列表
         fetchTasks();
