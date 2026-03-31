@@ -246,22 +246,21 @@ export function AppContent({ pricingSection }: AppContentProps) {
         </div>
 
         <div className="mt-12 flex-1 overflow-y-auto">
-          {activeTab === 'create' && (
+          {/* 使用 CSS 隐藏代替条件渲染，保持组件状态 */}
+          <div className={activeTab === 'create' ? 'block' : 'hidden'}>
             <GenerationControlMobile
               onGenerationComplete={handleGenerationComplete}
               forceModelId={forceModelId}
               onModelForced={() => setForceModelId(null)}
             />
-          )}
-          {activeTab === 'history' && (
-            <div className="p-4">
-              <GenerationHistory
-                tasks={tasks}
-                loading={loading}
-                onDeleteTask={handleDeleteTask}
-              />
-            </div>
-          )}
+          </div>
+          <div className={activeTab === 'history' ? 'block p-4' : 'hidden'}>
+            <GenerationHistory
+              tasks={tasks}
+              loading={loading}
+              onDeleteTask={handleDeleteTask}
+            />
+          </div>
         </div>
       </div>
 
