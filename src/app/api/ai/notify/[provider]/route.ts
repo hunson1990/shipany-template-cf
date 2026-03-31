@@ -17,7 +17,37 @@ const providerHandlers: Record<string, ProviderHandler> = {
       return AITaskStatus.PENDING;
     },
     getErrorMessage: (body) => body.msg,
-    getTaskInfo: (body, existingInfo) => existingInfo || {},
+    getTaskInfo: (body, existingInfo) => {
+      const info: AITaskInfo = existingInfo ? { ...existingInfo } : {};
+      const data = body.data;
+      
+      if (data) {
+        const images: AIImage[] = [];
+        const videos: AIVideo[] = [];
+        
+        if (data.image_url) {
+          images.push({
+            imageUrl: data.image_url,
+            imageType: 'image',
+          });
+        }
+        
+        if (data.video_url) {
+          videos.push({
+            videoUrl: data.video_url,
+          });
+        }
+        
+        if (images.length > 0) {
+          info.images = images;
+        }
+        if (videos.length > 0) {
+          info.videos = videos;
+        }
+      }
+      
+      return info;
+    },
     getTaskResult: (body) => body,
   },
   replicate: {
