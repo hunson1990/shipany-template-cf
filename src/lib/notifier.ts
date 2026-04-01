@@ -134,8 +134,10 @@ function formatMessage(
 ): { title: string; content: string } {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || 'App';
   
-  // Add keyword to title if configured
-  const keywordPrefix = keyword ? `[${keyword}] ` : '';
+  // Add keyword and appName to title
+  const keywordPrefix = keyword ? `[${keyword}]` : '';
+  const appPrefix = `[${appName}]`;
+  const titlePrefix = keywordPrefix ? `${keywordPrefix}${appPrefix} ` : `${appPrefix} `;
   
   switch (type) {
     case 'register': {
@@ -143,8 +145,8 @@ function formatMessage(
       const locationInfo = data.locationCn || data.location || '-';
       
       return {
-        title: `${keywordPrefix}New User Registration`,
-        content: `## 🎉 ${keywordPrefix}New User Registration\n\n` +
+        title: `${titlePrefix}New User Registration`,
+        content: `## 🎉 ${titlePrefix}New User Registration\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **User ID**: ${data.userId || '-'}\n` +
@@ -159,8 +161,8 @@ function formatMessage(
 
     case 'payment':
       return {
-        title: `${keywordPrefix}Payment Success`,
-        content: `## ● ${keywordPrefix}Payment Success\n\n` +
+        title: `${titlePrefix}Payment Success`,
+        content: `## ● ${titlePrefix}Payment Success\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **Type**: ${data.subscriptionNo ? 'Subscription' : 'One-time'}\n` +
@@ -172,8 +174,8 @@ function formatMessage(
 
     case 'renewal':
       return {
-        title: `${keywordPrefix}Renewal Success`,
-        content: `## 🔄 ${keywordPrefix}Renewal Success\n\n` +
+        title: `${titlePrefix}Renewal Success`,
+        content: `## 🔄 ${titlePrefix}Renewal Success\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **Plan**: ${data.planName || '-'}\n` +
@@ -184,8 +186,8 @@ function formatMessage(
 
     case 'cancel':
       return {
-        title: `${keywordPrefix}Subscription Canceled`,
-        content: `## ⚠️ ${keywordPrefix}Subscription Canceled\n\n` +
+        title: `${titlePrefix}Subscription Canceled`,
+        content: `## ⚠️ ${titlePrefix}Subscription Canceled\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **Plan**: ${data.planName || '-'}\n` +
@@ -196,8 +198,8 @@ function formatMessage(
 
     default:
       return {
-        title: `${keywordPrefix}System Notification`,
-        content: `## 📢 ${keywordPrefix}System Notification\n\n${JSON.stringify(data, null, 2)}`,
+        title: `${titlePrefix}System Notification`,
+        content: `## 📢 ${titlePrefix}System Notification\n\n${JSON.stringify(data, null, 2)}`,
       };
   }
 }
