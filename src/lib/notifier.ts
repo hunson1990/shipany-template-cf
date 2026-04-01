@@ -160,7 +160,7 @@ function formatMessage(
     case 'payment':
       return {
         title: `${keywordPrefix}Payment Success`,
-        content: `## 💰 ${keywordPrefix}Payment Success\n\n` +
+        content: `## ● ${keywordPrefix}Payment Success\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **Type**: ${data.subscriptionNo ? 'Subscription' : 'One-time'}\n` +
