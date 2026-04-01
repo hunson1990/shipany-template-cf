@@ -139,6 +139,17 @@ export async function getAuthOptions(configs: Record<string, string>) {
                 }
               }
 
+              // Get device fingerprint from cookie for anti-abuse detection
+              const fingerprintCookie = getCookieFromCtx(ctx, 'client_fingerprint');
+              if (fingerprintCookie) {
+                try {
+                  const fingerprint = JSON.parse(decodeURIComponent(fingerprintCookie));
+                  user._clientFingerprint = fingerprint;
+                } catch (e) {
+                  console.log('[auth] failed to parse device fingerprint', e);
+                }
+              }
+
               // Prefer NEXT_LOCALE cookie (next-intl). Fallback to accept-language.
               const localeFromCookie = getCookieFromCtx(ctx, 'NEXT_LOCALE');
 
@@ -223,13 +234,19 @@ export async function getAuthOptions(configs: Record<string, string>) {
             return user;
           },
           after: async (user: any) => {
+            let creditsResult: { granted: boolean; reason?: string; credits?: number } = { granted: false };
+
             try {
               if (!user.id) {
                 throw new Error('user id is required');
               }
 
-              // grant credits for new user
-              await grantCreditsForNewUser(user);
+              // grant credits for new user (with device fingerprint check for anti-abuse)
+              creditsResult = await grantCreditsForNewUser(
+                user,
+                user._clientFingerprint,
+                user.ip
+              );
 
               // grant role for new user
               await grantRoleForNewUser(user);
@@ -251,6 +268,9 @@ export async function getAuthOptions(configs: Record<string, string>) {
                 utmCampaign: user.utmCampaign,
                 signupUrl: user.signupUrl,
                 signupReferrer: user.signupReferrer,
+                creditsGranted: creditsResult.granted,
+                creditsAmount: creditsResult.credits,
+                creditsReason: creditsResult.reason,
               });
             } catch {
               // Silently fail

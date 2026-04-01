@@ -522,3 +522,46 @@ export const chatMessage = table(
     index('idx_chat_message_user_id').on(table.userId, table.status),
   ]
 );
+
+// Device fingerprints table for anti-abuse detection
+export const deviceFingerprint = table(
+  'device_fingerprint',
+  {
+    id: varchar191('id').primaryKey(),
+    fingerprintHash: varchar('fingerprint_hash', { length: 64 }).notNull().unique(),
+    ipAddress: varchar('ip_address', { length: 45 }).notNull().default(''),
+    userAgent: text('user_agent').notNull(),
+    screenResolution: varchar('screen_resolution', { length: 20 }).notNull().default(''),
+    timezone: varchar('timezone', { length: 100 }).notNull().default(''),
+    language: varchar('language', { length: 20 }).notNull().default(''),
+    platform: varchar('platform', { length: 50 }).notNull().default(''),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_device_fingerprint_hash').on(table.fingerprintHash),
+    index('idx_device_fingerprint_ip').on(table.ipAddress),
+  ]
+);
+
+// Device fingerprint checks table for tracking credit grants
+export const deviceFingerprintCheck = table(
+  'device_fingerprint_check',
+  {
+    id: varchar191('id').primaryKey(),
+    fingerprintHash: varchar('fingerprint_hash', { length: 64 })
+      .notNull()
+      .references(() => deviceFingerprint.fingerprintHash, { onDelete: 'cascade' }),
+    userId: varchar191('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    creditsGranted: boolean('credits_granted')
+      .default(false)
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('idx_device_fingerprint_check_hash').on(table.fingerprintHash),
+    index('idx_device_fingerprint_check_user').on(table.userId),
+    index('idx_device_fingerprint_check_grant').on(table.fingerprintHash, table.creditsGranted),
+  ]
+);

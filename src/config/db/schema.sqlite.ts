@@ -606,3 +606,50 @@ export const chatMessage = table(
     index('idx_chat_message_user_id').on(table.userId, table.status),
   ]
 );
+
+// Device fingerprints table for anti-abuse detection
+export const deviceFingerprint = table(
+  'device_fingerprint',
+  {
+    id: text('id').primaryKey(),
+    fingerprintHash: text('fingerprint_hash').notNull().unique(),
+    ipAddress: text('ip_address').notNull().default(''),
+    userAgent: text('user_agent').notNull().default(''),
+    screenResolution: text('screen_resolution').notNull().default(''),
+    timezone: text('timezone').notNull().default(''),
+    language: text('language').notNull().default(''),
+    platform: text('platform').notNull().default(''),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [
+    index('idx_device_fingerprint_hash').on(table.fingerprintHash),
+    index('idx_device_fingerprint_ip').on(table.ipAddress),
+  ]
+);
+
+// Device fingerprint checks table for tracking credit grants
+export const deviceFingerprintCheck = table(
+  'device_fingerprint_check',
+  {
+    id: text('id').primaryKey(),
+    fingerprintHash: text('fingerprint_hash')
+      .notNull()
+      .references(() => deviceFingerprint.fingerprintHash, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    creditsGranted: integer('credits_granted', { mode: 'boolean' })
+      .default(false)
+      .notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sqliteNowMs)
+      .notNull(),
+  },
+  (table) => [
+    index('idx_device_fingerprint_check_hash').on(table.fingerprintHash),
+    index('idx_device_fingerprint_check_user').on(table.userId),
+    index('idx_device_fingerprint_check_grant').on(table.fingerprintHash, table.creditsGranted),
+  ]
+);

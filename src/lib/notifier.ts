@@ -21,6 +21,10 @@ interface NotifyData {
   utmCampaign?: string;
   signupUrl?: string;
   signupReferrer?: string;
+  // Credits grant info
+  creditsGranted?: boolean;
+  creditsAmount?: number;
+  creditsReason?: string;
 }
 
 /**
@@ -153,6 +157,20 @@ function formatMessage(
       const utmInfo = formatUtm(data);
       const locationInfo = data.locationCn || data.location || '-';
       
+      // 积分赠送状态
+      let creditsInfo = 'Not configured';
+      if (data.creditsGranted === true) {
+        creditsInfo = `✅ Granted (${data.creditsAmount} credits)`;
+      } else if (data.creditsGranted === false) {
+        if (data.creditsReason === 'device_fingerprint_exists') {
+          creditsInfo = '❌ Blocked (suspected abuse)';
+        } else if (data.creditsReason === 'initial_credits_disabled') {
+          creditsInfo = '⏸️ Disabled';
+        } else {
+          creditsInfo = `❌ Not granted (${data.creditsReason || 'unknown'})`;
+        }
+      }
+      
       return {
         title: `${titlePrefix}New User Registration`,
         content: `## 🎉 ${titlePrefix}New User Registration\n\n` +
@@ -164,6 +182,7 @@ function formatMessage(
           `- **UTM**: ${utmInfo}\n` +
           `- **Signup URL**: ${data.signupUrl || '-'}\n` +
           `- **Referrer**: ${data.signupReferrer || '-'}\n` +
+          `- **Credits**: ${creditsInfo}\n` +
           `- **Time**: ${formatTime()}\n`,
       };
     }

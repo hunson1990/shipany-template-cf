@@ -3,6 +3,15 @@ import { and, asc, count, desc, eq, gt, isNull, or, sum } from 'drizzle-orm';
 import { db } from '@/core/db';
 import { credit } from '@/config/db/schema';
 import { getSnowId, getUuid } from '@/shared/lib/hash';
+import {
+  checkDeviceFingerprintCredits,
+  insertDeviceFingerprint,
+  insertDeviceFingerprintCheck,
+} from '@/shared/models/device-fingerprint';
+import {
+  extractKeyFingerprint,
+  generateFingerprintHash,
+} from '@/shared/services/device-fingerprint';
 
 import { getAllConfigs } from './config';
 import { appendUserToResult, User } from './user';
@@ -321,19 +330,85 @@ export async function getRemainingCredits(userId: string): Promise<number> {
 }
 
 // grant credits for new user
-export async function grantCreditsForNewUser(user: User) {
+// returns: { granted: boolean, reason?: string, credits?: number }
+export async function grantCreditsForNewUser(
+  user: User,
+  clientFingerprint?: any,
+  ipAddress?: string
+): Promise<{ granted: boolean; reason?: string; credits?: number }> {
   // get configs from db
   const configs = await getAllConfigs();
 
   // if initial credits enabled
   if (configs.initial_credits_enabled !== 'true') {
-    return;
+    return { granted: false, reason: 'initial_credits_disabled' };
   }
 
   // get initial credits amount and valid days
   const credits = parseInt(configs.initial_credits_amount as string) || 0;
   if (credits <= 0) {
-    return;
+    return { granted: false, reason: 'invalid_credits_amount' };
+  }
+
+  // 反薅羊毛检测：检查设备指纹是否已获得过积分
+  if (clientFingerprint) {
+    try {
+      const keyFingerprint = extractKeyFingerprint(clientFingerprint);
+      const fingerprintHash = generateFingerprintHash({
+        ...keyFingerprint,
+        ipAddress: ipAddress || '',
+      });
+
+      // 检查该设备指纹是否已获得过积分
+      const existingGrant = await checkDeviceFingerprintCredits(fingerprintHash);
+
+      if (!existingGrant) {
+        // 首次使用该设备指纹，可以赠送积分
+        // 记录设备指纹
+        await insertDeviceFingerprint({
+          fingerprintHash,
+          ipAddress: ipAddress || '',
+          userAgent: keyFingerprint.userAgent,
+          screenResolution: keyFingerprint.screenResolution,
+          timezone: keyFingerprint.timezone,
+          language: keyFingerprint.language,
+          platform: keyFingerprint.platform,
+        });
+
+        // 记录积分赠送记录
+        await insertDeviceFingerprintCheck({
+          fingerprintHash,
+          userId: user.id,
+          creditsGranted: true,
+        });
+
+        console.log(
+          `[grantCreditsForNewUser] 新设备指纹，赠送积分给用户: ${user.email}, 指纹: ${fingerprintHash.substring(0, 8)}...`
+        );
+      } else {
+        // 设备指纹已存在，不赠送积分（薅羊毛检测）
+        console.log(
+          `[grantCreditsForNewUser] 设备指纹已存在，不赠送积分: ${user.email}, 指纹: ${existingGrant.fingerprintHash.substring(0, 8)}...`
+        );
+
+        // 记录尝试薅羊毛的行为
+        await insertDeviceFingerprintCheck({
+          fingerprintHash,
+          userId: user.id,
+          creditsGranted: false,
+        });
+
+        return { granted: false, reason: 'device_fingerprint_exists' };
+      }
+    } catch (fingerprintError) {
+      console.error(
+        '[grantCreditsForNewUser] 设备指纹检测失败，默认赠送积分:',
+        fingerprintError
+      );
+      // 检测失败时继续赠送，避免误伤正常用户
+    }
+  } else {
+    console.log(`[grantCreditsForNewUser] 无设备指纹信息: ${user.email}`);
   }
 
   const creditsValidDays =
@@ -341,14 +416,14 @@ export async function grantCreditsForNewUser(user: User) {
 
   const description = configs.initial_credits_description || 'initial credits';
 
-  const newCredit = await grantCreditsForUser({
+  await grantCreditsForUser({
     user: user,
     credits: credits,
     validDays: creditsValidDays,
     description: description,
   });
 
-  return newCredit;
+  return { granted: true, credits };
 }
 
 // grant credits for user
