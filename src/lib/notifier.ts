@@ -83,6 +83,11 @@ async function sendDingTalk(
   console.log('[Notifier] DingTalk message prepared:', { title, content: content.slice(0, 100) + '...' });
 
   try {
+    console.log('[Notifier] DingTalk fetch starting...', { webhookUrl: webhookUrl.slice(0, 50) + '...' });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,7 +98,11 @@ async function sendDingTalk(
           text: content,
         },
       }),
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
+    console.log('[Notifier] DingTalk fetch completed, status:', response.status);
 
     const responseText = await response.text();
     console.log('[Notifier] DingTalk response:', {
