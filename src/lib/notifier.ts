@@ -19,9 +19,11 @@ interface NotifyData {
  * Fire-and-forget: won't block business flow
  */
 export function notifyAdmin(type: NotifyType, data: NotifyData) {
+  console.log(`[Notifier] notifyAdmin called: type=${type}, data=${JSON.stringify(data)}`);
+  
   // Don't await, let it run in background
-  sendNotification(type, data).catch(() => {
-    // Silently fail, don't affect business
+  sendNotification(type, data).catch((error) => {
+    console.error('[Notifier] sendNotification failed:', error);
   });
 }
 
@@ -29,16 +31,29 @@ export function notifyAdmin(type: NotifyType, data: NotifyData) {
  * Internal: actually send notification
  */
 async function sendNotification(type: NotifyType, data: NotifyData) {
+  console.log('[Notifier] sendNotification started');
+  
   const configs = await getAllConfigs();
+  console.log('[Notifier] configs loaded:', {
+    dingtalk_enabled: configs.dingtalk_enabled,
+    dingtalk_webhook_url: configs.dingtalk_webhook_url ? '***set***' : '***empty***',
+    dingtalk_keyword: configs.dingtalk_keyword,
+  });
 
   // DingTalk
   if (configs.dingtalk_enabled === 'true' && configs.dingtalk_webhook_url) {
+    console.log('[Notifier] DingTalk conditions met, sending...');
     await sendDingTalk(
       configs.dingtalk_webhook_url,
       configs.dingtalk_keyword,
       type,
       data
     );
+  } else {
+    console.log('[Notifier] DingTalk skipped:', {
+      enabled: configs.dingtalk_enabled === 'true',
+      hasWebhook: !!configs.dingtalk_webhook_url,
+    });
   }
 
   // Future: add more channels here (WeCom, Feishu, Slack, Email...)
@@ -55,21 +70,37 @@ async function sendDingTalk(
   data: NotifyData
 ) {
   const { title, content } = formatMessage(type, data, keyword);
+  
+  console.log('[Notifier] DingTalk message prepared:', { title, content: content.slice(0, 100) + '...' });
 
-  const response = await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      msgtype: 'markdown',
-      markdown: {
-        title,
-        text: content,
-      },
-    }),
-  });
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        msgtype: 'markdown',
+        markdown: {
+          title,
+          text: content,
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    console.error('Failed to send DingTalk notification:', await response.text());
+    const responseText = await response.text();
+    console.log('[Notifier] DingTalk response:', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    });
+
+    if (!response.ok) {
+      console.error('[Notifier] Failed to send DingTalk notification:', responseText);
+    } else {
+      console.log('[Notifier] DingTalk notification sent successfully');
+    }
+  } catch (error) {
+    console.error('[Notifier] DingTalk fetch error:', error);
+    throw error;
   }
 }
 
