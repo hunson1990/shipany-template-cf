@@ -243,6 +243,14 @@ export async function getAuthOptions(configs: Record<string, string>) {
               notifyAdmin('register', {
                 email: user.email,
                 userId: user.id,
+                ip: user.ip,
+                location: user.location,
+                locationCn: user.locationCn,
+                utmSource: user.utmSource,
+                utmMedium: user.utmMedium,
+                utmCampaign: user.utmCampaign,
+                signupUrl: user.signupUrl,
+                signupReferrer: user.signupReferrer,
               });
             } catch {
               // Silently fail

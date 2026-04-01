@@ -12,6 +12,15 @@ interface NotifyData {
   orderNo?: string;
   subscriptionNo?: string;
   canceledReason?: string;
+  // Register extra fields
+  ip?: string;
+  location?: string;
+  locationCn?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  signupUrl?: string;
+  signupReferrer?: string;
 }
 
 /**
@@ -105,6 +114,17 @@ async function sendDingTalk(
 }
 
 /**
+ * Format UTM params for display
+ */
+function formatUtm(data: NotifyData): string {
+  const parts: string[] = [];
+  if (data.utmSource) parts.push(`Source: ${data.utmSource}`);
+  if (data.utmMedium) parts.push(`Medium: ${data.utmMedium}`);
+  if (data.utmCampaign) parts.push(`Campaign: ${data.utmCampaign}`);
+  return parts.length > 0 ? parts.join(' | ') : '-';
+}
+
+/**
  * Format notification message
  */
 function formatMessage(
@@ -118,63 +138,72 @@ function formatMessage(
   const keywordPrefix = keyword ? `[${keyword}] ` : '';
   
   switch (type) {
-    case 'register':
+    case 'register': {
+      const utmInfo = formatUtm(data);
+      const locationInfo = data.locationCn || data.location || '-';
+      
       return {
-        title: `${keywordPrefix}新用户注册`,
-        content: `## 🎉 ${keywordPrefix}新用户注册\n\n` +
-          `- **应用**: ${appName}\n` +
-          `- **邮箱**: ${data.email || '-'}\n` +
-          `- **用户ID**: ${data.userId || '-'}\n` +
-          `- **时间**: ${formatTime()}\n`,
+        title: `${keywordPrefix}New User Registration`,
+        content: `## 🎉 ${keywordPrefix}New User Registration\n\n` +
+          `- **App**: ${appName}\n` +
+          `- **Email**: ${data.email || '-'}\n` +
+          `- **User ID**: ${data.userId || '-'}\n` +
+          `- **IP**: ${data.ip || '-'}\n` +
+          `- **Location**: ${locationInfo}\n` +
+          `- **UTM**: ${utmInfo}\n` +
+          `- **Signup URL**: ${data.signupUrl || '-'}\n` +
+          `- **Referrer**: ${data.signupReferrer || '-'}\n` +
+          `- **Time**: ${formatTime()}\n`,
       };
+    }
 
     case 'payment':
       return {
-        title: `${keywordPrefix}支付成功`,
-        content: `## 💰 ${keywordPrefix}支付成功\n\n` +
-          `- **应用**: ${appName}\n` +
-          `- **邮箱**: ${data.email || '-'}\n` +
-          `- **类型**: ${data.subscriptionNo ? '订阅' : '一次性'}\n` +
-          `- **套餐**: ${data.planName || data.productName || '-'}\n` +
-          `- **金额**: ${data.currency || '$'}${data.amount || '-'}\n` +
-          `- **订单**: ${data.orderNo || '-'}\n` +
-          `- **时间**: ${formatTime()}\n`,
+        title: `${keywordPrefix}Payment Success`,
+        content: `## 💰 ${keywordPrefix}Payment Success\n\n` +
+          `- **App**: ${appName}\n` +
+          `- **Email**: ${data.email || '-'}\n` +
+          `- **Type**: ${data.subscriptionNo ? 'Subscription' : 'One-time'}\n` +
+          `- **Plan**: ${data.planName || data.productName || '-'}\n` +
+          `- **Amount**: ${data.currency || '$'}${data.amount || '-'}\n` +
+          `- **Order**: ${data.orderNo || '-'}\n` +
+          `- **Time**: ${formatTime()}\n`,
       };
 
     case 'renewal':
       return {
-        title: `${keywordPrefix}续费成功`,
-        content: `## 🔄 ${keywordPrefix}续费成功\n\n` +
-          `- **应用**: ${appName}\n` +
-          `- **邮箱**: ${data.email || '-'}\n` +
-          `- **套餐**: ${data.planName || '-'}\n` +
-          `- **金额**: ${data.currency || '$'}${data.amount || '-'}\n` +
-          `- **订阅**: ${data.subscriptionNo || '-'}\n` +
-          `- **时间**: ${formatTime()}\n`,
+        title: `${keywordPrefix}Renewal Success`,
+        content: `## 🔄 ${keywordPrefix}Renewal Success\n\n` +
+          `- **App**: ${appName}\n` +
+          `- **Email**: ${data.email || '-'}\n` +
+          `- **Plan**: ${data.planName || '-'}\n` +
+          `- **Amount**: ${data.currency || '$'}${data.amount || '-'}\n` +
+          `- **Subscription**: ${data.subscriptionNo || '-'}\n` +
+          `- **Time**: ${formatTime()}\n`,
       };
 
     case 'cancel':
       return {
-        title: `${keywordPrefix}订阅取消`,
-        content: `## ⚠️ ${keywordPrefix}订阅取消\n\n` +
-          `- **应用**: ${appName}\n` +
-          `- **邮箱**: ${data.email || '-'}\n` +
-          `- **套餐**: ${data.planName || '-'}\n` +
-          `- **订阅**: ${data.subscriptionNo || '-'}\n` +
-          `- **原因**: ${data.canceledReason || '-'}\n` +
-          `- **时间**: ${formatTime()}\n`,
+        title: `${keywordPrefix}Subscription Canceled`,
+        content: `## ⚠️ ${keywordPrefix}Subscription Canceled\n\n` +
+          `- **App**: ${appName}\n` +
+          `- **Email**: ${data.email || '-'}\n` +
+          `- **Plan**: ${data.planName || '-'}\n` +
+          `- **Subscription**: ${data.subscriptionNo || '-'}\n` +
+          `- **Reason**: ${data.canceledReason || '-'}\n` +
+          `- **Time**: ${formatTime()}\n`,
       };
 
     default:
       return {
-        title: `${keywordPrefix}系统通知`,
-        content: `## 📢 ${keywordPrefix}系统通知\n\n${JSON.stringify(data, null, 2)}`,
+        title: `${keywordPrefix}System Notification`,
+        content: `## 📢 ${keywordPrefix}System Notification\n\n${JSON.stringify(data, null, 2)}`,
       };
   }
 }
 
 function formatTime(): string {
-  return new Date().toLocaleString('zh-CN', {
+  return new Date().toLocaleString('en-US', {
     timeZone: 'Asia/Shanghai',
     month: '2-digit',
     day: '2-digit',
