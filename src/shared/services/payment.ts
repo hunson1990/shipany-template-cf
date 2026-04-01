@@ -297,12 +297,12 @@ export async function handleCheckoutSuccess({
     try {
       const { notifyAdmin } = await import('@/lib/notifier');
       notifyAdmin('payment', {
-        email: order.userEmail,
+        email: order.userEmail || undefined,
         userId: order.userId,
         amount: session.paymentInfo?.paymentAmount,
         currency: session.paymentInfo?.paymentCurrency,
-        planName: order.planName,
-        productName: order.productName,
+        planName: order.planName || undefined,
+        productName: order.productName || undefined,
         orderNo: order.orderNo,
         subscriptionNo: newSubscription?.subscriptionNo,
       });
@@ -580,11 +580,11 @@ export async function handleSubscriptionRenewal({
     try {
       const { notifyAdmin } = await import('@/lib/notifier');
       notifyAdmin('renewal', {
-        email: subscription.userEmail,
+        email: subscription.userEmail || undefined,
         userId: subscription.userId,
         amount: session.paymentInfo?.paymentAmount || subscription.amount,
         currency: session.paymentInfo?.paymentCurrency || subscription.currency,
-        planName: subscription.planName,
+        planName: subscription.planName || undefined,
         subscriptionNo: subscription.subscriptionNo,
       });
     } catch {
@@ -660,9 +660,9 @@ export async function handleSubscriptionCanceled({
   try {
     const { notifyAdmin } = await import('@/lib/notifier');
     notifyAdmin('cancel', {
-      email: subscription.userEmail,
+      email: subscription.userEmail || undefined,
       userId: subscription.userId,
-      planName: subscription.planName,
+      planName: subscription.planName || undefined,
       subscriptionNo: subscription.subscriptionNo,
       canceledReason: subscriptionInfo.canceledReason,
     });

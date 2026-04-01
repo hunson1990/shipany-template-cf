@@ -34,6 +34,8 @@ export const user = table(
     signupReferrer: varchar('signup_referrer', { length: 500 }).notNull().default(''),
     ip: varchar('ip', { length: 45 }).notNull().default(''),
     locale: varchar('locale', { length: 20 }).notNull().default(''),
+    location: varchar('location', { length: 100 }).notNull().default(''),
+    locationCn: varchar('location_cn', { length: 100 }).notNull().default(''),
   },
   (table) => [
     // Search users by name in admin dashboard

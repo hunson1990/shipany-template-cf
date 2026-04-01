@@ -123,6 +123,12 @@ export async function getSettingGroups() {
       tab: 'general',
     },
     {
+      name: 'external_services',
+      title: 'External Services',
+      description: 'Configure third-party external service integrations',
+      tab: 'general',
+    },
+    {
       name: 'email_auth',
       title: t('groups.email_auth'),
       description: 'custom your email auth settings',
@@ -386,6 +392,15 @@ export async function getSettings() {
       group: 'credit',
       tab: 'general',
       tip: 'description for initial credits',
+    },
+    {
+      name: 'ipinfo_token',
+      title: 'IPInfo Token',
+      type: 'password',
+      placeholder: 'xxx',
+      group: 'external_services',
+      tab: 'general',
+      tip: 'Token for IPInfo geolocation service to get user location from IP address',
     },
     {
       name: 'email_auth_enabled',
@@ -1002,6 +1017,15 @@ export async function getSettings() {
       group: 'dingtalk',
       tab: 'notification',
       tip: 'Required if you enabled "Sign" security setting in DingTalk robot. Leave empty if not using sign verification.',
+    },
+    {
+      name: 'dingtalk_keyword',
+      title: 'DingTalk Keyword',
+      type: 'text',
+      placeholder: '通知',
+      group: 'dingtalk',
+      tab: 'notification',
+      tip: 'Custom keyword for DingTalk robot security setting. The message will include this keyword automatically.',
     },
   ];
 

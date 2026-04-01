@@ -13,6 +13,7 @@ import {
 } from '@/shared/lib/cookie';
 import { getUuid } from '@/shared/lib/hash';
 import { getClientIp } from '@/shared/lib/ip';
+import { getLocationFromIP } from '@/shared/services/geolocation';
 import { grantCreditsForNewUser } from '@/shared/models/credit';
 import { getEmailService } from '@/shared/services/email';
 import { grantRoleForNewUser } from '@/shared/services/rbac';
@@ -77,6 +78,18 @@ const authOptions = {
         required: false,
         defaultValue: '',
       },
+      location: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
+      locationCn: {
+        type: 'string',
+        input: false,
+        required: false,
+        defaultValue: '',
+      },
     },
   },
   advanced: {
@@ -116,6 +129,14 @@ export async function getAuthOptions(configs: Record<string, string>) {
               const ip = await getClientIp();
               if (ip) {
                 user.ip = ip;
+                // Get location from IP (both English and Chinese)
+                const locationResult = await getLocationFromIP(ip);
+                if (locationResult.location) {
+                  user.location = locationResult.location;
+                }
+                if (locationResult.locationCn) {
+                  user.locationCn = locationResult.locationCn;
+                }
               }
 
               // Prefer NEXT_LOCALE cookie (next-intl). Fallback to accept-language.

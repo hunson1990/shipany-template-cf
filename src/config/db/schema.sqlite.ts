@@ -32,6 +32,8 @@ export const user = table(
     signupReferrer: text('signup_referrer').notNull().default(''),
     ip: text('ip').notNull().default(''),
     locale: text('locale').notNull().default(''),
+    location: text('location').notNull().default(''),
+    locationCn: text('location_cn').notNull().default(''),
   },
   (table) => [
     // Search users by name in admin dashboard

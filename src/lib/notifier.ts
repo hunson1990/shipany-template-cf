@@ -11,7 +11,7 @@ interface NotifyData {
   productName?: string;
   orderNo?: string;
   subscriptionNo?: string;
-  [key: string]: any;
+  canceledReason?: string;
 }
 
 /**
@@ -33,7 +33,12 @@ async function sendNotification(type: NotifyType, data: NotifyData) {
 
   // DingTalk
   if (configs.dingtalk_enabled === 'true' && configs.dingtalk_webhook_url) {
-    await sendDingTalk(configs.dingtalk_webhook_url, configs.dingtalk_secret, type, data);
+    await sendDingTalk(
+      configs.dingtalk_webhook_url,
+      configs.dingtalk_keyword,
+      type,
+      data
+    );
   }
 
   // Future: add more channels here (WeCom, Feishu, Slack, Email...)
@@ -45,58 +50,48 @@ async function sendNotification(type: NotifyType, data: NotifyData) {
  */
 async function sendDingTalk(
   webhookUrl: string,
-  secret: string | undefined,
+  keyword: string | undefined,
   type: NotifyType,
   data: NotifyData
 ) {
-  const { title, content } = formatMessage(type, data);
+  const { title, content } = formatMessage(type, data, keyword);
 
-  let url = webhookUrl;
-
-  // Add signature if secret is configured
-  if (secret) {
-    const timestamp = Date.now();
-    const sign = generateDingTalkSign(timestamp, secret);
-    url = `${webhookUrl}&timestamp=${timestamp}&sign=${sign}`;
-  }
-
-  const payload = {
-    msgtype: 'markdown',
-    markdown: {
-      title,
-      text: content,
-    },
-  };
-
-  await fetch(url, {
+  const response = await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      msgtype: 'markdown',
+      markdown: {
+        title,
+        text: content,
+      },
+    }),
   });
-}
 
-/**
- * Generate DingTalk signature
- */
-function generateDingTalkSign(timestamp: number, secret: string): string {
-  const crypto = require('crypto');
-  const stringToSign = `${timestamp}\n${secret}`;
-  const hmac = crypto.createHmac('sha256', secret);
-  hmac.update(stringToSign);
-  return encodeURIComponent(hmac.digest('base64'));
+  if (!response.ok) {
+    console.error('Failed to send DingTalk notification:', await response.text());
+  }
 }
 
 /**
  * Format notification message
  */
-function formatMessage(type: NotifyType, data: NotifyData): { title: string; content: string } {
+function formatMessage(
+  type: NotifyType,
+  data: NotifyData,
+  keyword?: string
+): { title: string; content: string } {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || 'App';
+  
+  // Add keyword to title if configured
+  const keywordPrefix = keyword ? `[${keyword}] ` : '';
   
   switch (type) {
     case 'register':
       return {
-        title: '新用户注册',
-        content: `## 🎉 新用户注册\n\n` +
+        title: `${keywordPrefix}新用户注册`,
+        content: `## 🎉 ${keywordPrefix}新用户注册\n\n` +
+          `- **应用**: ${appName}\n` +
           `- **邮箱**: ${data.email || '-'}\n` +
           `- **用户ID**: ${data.userId || '-'}\n` +
           `- **时间**: ${formatTime()}\n`,
@@ -104,8 +99,9 @@ function formatMessage(type: NotifyType, data: NotifyData): { title: string; con
 
     case 'payment':
       return {
-        title: '支付成功',
-        content: `## 💰 支付成功\n\n` +
+        title: `${keywordPrefix}支付成功`,
+        content: `## 💰 ${keywordPrefix}支付成功\n\n` +
+          `- **应用**: ${appName}\n` +
           `- **邮箱**: ${data.email || '-'}\n` +
           `- **类型**: ${data.subscriptionNo ? '订阅' : '一次性'}\n` +
           `- **套餐**: ${data.planName || data.productName || '-'}\n` +
@@ -116,8 +112,9 @@ function formatMessage(type: NotifyType, data: NotifyData): { title: string; con
 
     case 'renewal':
       return {
-        title: '续费成功',
-        content: `## 🔄 续费成功\n\n` +
+        title: `${keywordPrefix}续费成功`,
+        content: `## 🔄 ${keywordPrefix}续费成功\n\n` +
+          `- **应用**: ${appName}\n` +
           `- **邮箱**: ${data.email || '-'}\n` +
           `- **套餐**: ${data.planName || '-'}\n` +
           `- **金额**: ${data.currency || '$'}${data.amount || '-'}\n` +
@@ -127,18 +124,20 @@ function formatMessage(type: NotifyType, data: NotifyData): { title: string; con
 
     case 'cancel':
       return {
-        title: '订阅取消',
-        content: `## ⚠️ 订阅取消\n\n` +
+        title: `${keywordPrefix}订阅取消`,
+        content: `## ⚠️ ${keywordPrefix}订阅取消\n\n` +
+          `- **应用**: ${appName}\n` +
           `- **邮箱**: ${data.email || '-'}\n` +
           `- **套餐**: ${data.planName || '-'}\n` +
           `- **订阅**: ${data.subscriptionNo || '-'}\n` +
+          `- **原因**: ${data.canceledReason || '-'}\n` +
           `- **时间**: ${formatTime()}\n`,
       };
 
     default:
       return {
-        title: '系统通知',
-        content: `## 📢 系统通知\n\n${JSON.stringify(data, null, 2)}`,
+        title: `${keywordPrefix}系统通知`,
+        content: `## 📢 ${keywordPrefix}系统通知\n\n${JSON.stringify(data, null, 2)}`,
       };
   }
 }
