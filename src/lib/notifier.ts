@@ -159,7 +159,8 @@ function formatMessage(
       };
     }
 
-    case 'payment':
+    case 'payment': {
+      const amount = data.amount ? (data.amount / 100).toFixed(2) : '-';
       return {
         title: `${titlePrefix}Payment Success`,
         content: `## ● ${titlePrefix}Payment Success\n\n` +
@@ -167,22 +168,25 @@ function formatMessage(
           `- **Email**: ${data.email || '-'}\n` +
           `- **Type**: ${data.subscriptionNo ? 'Subscription' : 'One-time'}\n` +
           `- **Plan**: ${data.planName || data.productName || '-'}\n` +
-          `- **Amount**: ${data.currency || '$'}${data.amount || '-'}\n` +
+          `- **Amount**: ${data.currency || '$'}${amount}\n` +
           `- **Order**: ${data.orderNo || '-'}\n` +
           `- **Time**: ${formatTime()}\n`,
       };
+    }
 
-    case 'renewal':
+    case 'renewal': {
+      const amount = data.amount ? (data.amount / 100).toFixed(2) : '-';
       return {
         title: `${titlePrefix}Renewal Success`,
         content: `## 🔄 ${titlePrefix}Renewal Success\n\n` +
           `- **App**: ${appName}\n` +
           `- **Email**: ${data.email || '-'}\n` +
           `- **Plan**: ${data.planName || '-'}\n` +
-          `- **Amount**: ${data.currency || '$'}${data.amount || '-'}\n` +
+          `- **Amount**: ${data.currency || '$'}${amount}\n` +
           `- **Subscription**: ${data.subscriptionNo || '-'}\n` +
           `- **Time**: ${formatTime()}\n`,
       };
+    }
 
     case 'cancel':
       return {
