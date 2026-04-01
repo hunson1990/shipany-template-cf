@@ -23,6 +23,7 @@
     "promotekit": "PromoteKit",
     "tawk": "Tawk",
     "crisp": "Crisp",
+    "dingtalk": "钉钉",
     "credit": "积分",
     "appinfo": "应用信息",
     "user_role": "用户角色"
@@ -44,7 +45,8 @@
       "analytics": "分析",
       "ads": "广告",
       "affiliate": "联盟营销",
-      "customer_service": "客服"
+      "customer_service": "客服",
+      "notification": "通知"
     },
     "buttons": {
       "submit": "保存"

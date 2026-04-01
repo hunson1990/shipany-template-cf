@@ -292,6 +292,23 @@ export async function handleCheckoutSuccess({
       newSubscription,
       newCredit,
     });
+
+    // Notify admin of successful payment (fire-and-forget)
+    try {
+      const { notifyAdmin } = await import('@/lib/notifier');
+      notifyAdmin('payment', {
+        email: order.userEmail,
+        userId: order.userId,
+        amount: session.paymentInfo?.paymentAmount,
+        currency: session.paymentInfo?.paymentCurrency,
+        planName: order.planName,
+        productName: order.productName,
+        orderNo: order.orderNo,
+        subscriptionNo: newSubscription?.subscriptionNo,
+      });
+    } catch {
+      // Silently fail
+    }
   } else if (
     session.paymentStatus === PaymentStatus.FAILED ||
     session.paymentStatus === PaymentStatus.CANCELED
@@ -558,6 +575,21 @@ export async function handleSubscriptionRenewal({
       newOrder: order,
       newCredit,
     });
+
+    // Notify admin of renewal (fire-and-forget)
+    try {
+      const { notifyAdmin } = await import('@/lib/notifier');
+      notifyAdmin('renewal', {
+        email: subscription.userEmail,
+        userId: subscription.userId,
+        amount: session.paymentInfo?.paymentAmount || subscription.amount,
+        currency: session.paymentInfo?.paymentCurrency || subscription.currency,
+        planName: subscription.planName,
+        subscriptionNo: subscription.subscriptionNo,
+      });
+    } catch {
+      // Silently fail
+    }
   } else {
     throw new Error('unknown payment status');
   }
@@ -623,6 +655,20 @@ export async function handleSubscriptionCanceled({
     canceledReason: subscriptionInfo.canceledReason,
     canceledReasonType: subscriptionInfo.canceledReasonType,
   });
+
+  // Notify admin of cancellation (fire-and-forget)
+  try {
+    const { notifyAdmin } = await import('@/lib/notifier');
+    notifyAdmin('cancel', {
+      email: subscription.userEmail,
+      userId: subscription.userId,
+      planName: subscription.planName,
+      subscriptionNo: subscription.subscriptionNo,
+      canceledReason: subscriptionInfo.canceledReason,
+    });
+  } catch {
+    // Silently fail
+  }
 
   // console.log('handle subscription canceled', subscriptionInfo);
 }

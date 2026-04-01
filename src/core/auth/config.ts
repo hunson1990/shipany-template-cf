@@ -215,6 +215,17 @@ export async function getAuthOptions(configs: Record<string, string>) {
             } catch (e) {
               console.log('grant credits or role for new user failed', e);
             }
+
+            // Notify admin (fire-and-forget)
+            try {
+              const { notifyAdmin } = await import('@/lib/notifier');
+              notifyAdmin('register', {
+                email: user.email,
+                userId: user.id,
+              });
+            } catch {
+              // Silently fail
+            }
           },
         },
       },

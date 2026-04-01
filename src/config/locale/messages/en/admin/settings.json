@@ -23,6 +23,7 @@
     "promotekit": "PromoteKit",
     "tawk": "Tawk",
     "crisp": "Crisp",
+    "dingtalk": "DingTalk",
     "credit": "Credit",
     "appinfo": "App Info",
     "user_role": "User Role"
@@ -44,7 +45,8 @@
       "analytics": "Analytics",
       "ads": "Ads",
       "affiliate": "Affiliate",
-      "customer_service": "Customer Service"
+      "customer_service": "Customer Service",
+      "notification": "Notification"
     },
     "buttons": {
       "submit": "Save"

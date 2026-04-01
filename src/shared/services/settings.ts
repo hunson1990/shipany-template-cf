@@ -90,6 +90,12 @@ export async function getSettingTabs(tab: string) {
       url: '/admin/settings/customer_service',
       is_active: tab === 'customer_service',
     },
+    {
+      name: 'notification',
+      title: t('edit.tabs.notification'),
+      url: '/admin/settings/notification',
+      is_active: tab === 'notification',
+    },
   ];
 
   return tabs;
@@ -276,6 +282,13 @@ export async function getSettingGroups() {
       description:
         'custom your <a href="https://www.tawk.to" class="text-primary" target="_blank">Tawk</a> settings',
       tab: 'customer_service',
+    },
+    {
+      name: 'dingtalk',
+      title: t('groups.dingtalk'),
+      description:
+        'custom your <a href="https://open.dingtalk.com/document/group/robot-overview" class="text-primary" target="_blank">DingTalk</a> robot notification settings',
+      tab: 'notification',
     },
   ];
   return settingGroups;
@@ -962,6 +975,33 @@ export async function getSettings() {
       placeholder: 'xxx',
       group: 'tawk',
       tab: 'customer_service',
+    },
+    {
+      name: 'dingtalk_enabled',
+      title: 'DingTalk Enabled',
+      type: 'switch',
+      value: 'false',
+      group: 'dingtalk',
+      tab: 'notification',
+      tip: 'Enable DingTalk robot notifications for user registration, payments, renewals, and cancellations',
+    },
+    {
+      name: 'dingtalk_webhook_url',
+      title: 'DingTalk Webhook URL',
+      type: 'text',
+      placeholder: 'https://oapi.dingtalk.com/robot/send?access_token=xxx',
+      group: 'dingtalk',
+      tab: 'notification',
+      tip: 'Get this from your DingTalk group robot settings',
+    },
+    {
+      name: 'dingtalk_secret',
+      title: 'DingTalk Secret',
+      type: 'password',
+      placeholder: 'SECxxx',
+      group: 'dingtalk',
+      tab: 'notification',
+      tip: 'Required if you enabled "Sign" security setting in DingTalk robot. Leave empty if not using sign verification.',
     },
   ];
 
