@@ -103,7 +103,10 @@ export default async function AdminUsersPage({
       { name: 'createdAt', title: t('fields.created_at'), type: 'time' },
       { name: 'ip', title: t('fields.ip'), type: 'copy' },
       { name: 'locale', title: t('fields.locale') },
+      { name: 'locationCn', title: t('fields.location') },
       { name: 'utmSource', title: t('fields.utm_source') },
+      { name: 'signupUrl', title: t('fields.signup_url'), type: 'copy' },
+      { name: 'signupReferrer', title: t('fields.signup_referrer'), type: 'copy' },
       {
         name: 'actions',
         title: t('fields.actions'),

@@ -11,7 +11,10 @@
     "roles": "角色",
     "ip": "IP",
     "locale": "语言",
-    "utm_source": "UTM Source"
+    "location": "地区",
+    "utm_source": "UTM Source",
+    "signup_url": "注册页面",
+    "signup_referrer": "来源页面"
   },
   "list": {
     "title": "用户",

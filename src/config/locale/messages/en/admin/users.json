@@ -11,7 +11,10 @@
     "roles": "Roles",
     "ip": "IP",
     "locale": "Locale",
-    "utm_source": "UTM Source"
+    "location": "Location",
+    "utm_source": "UTM Source",
+    "signup_url": "Signup URL",
+    "signup_referrer": "Referrer"
   },
   "list": {
     "title": "Users",
