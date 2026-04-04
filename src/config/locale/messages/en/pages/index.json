@@ -107,7 +107,7 @@
         "label": "Introduce",
         "description": "Soul Fuse is an AI-powered video generation platform that transforms your photos into stunning, cinematic videos with just a few clicks.",
         "image": {
-          "src": "/imgs/features/landing-page.png",
+          "src": "/imgs/features/why-soulfuse.webp",
           "alt": "introduce"
         },
         "items": [
@@ -162,7 +162,7 @@
             "description": "Create broadcast-quality videos that look like they were made by professional videographers.",
             "icon": "RiClapperboardAiLine",
             "image": {
-              "src": "/imgs/features/user-billing.png",
+              "src": "/imgs/features/why-choose-1.webp",
               "alt": "benefits"
             }
           },
@@ -171,7 +171,7 @@
             "description": "Explore endless possibilities with multiple AI models, styles, and customization options.",
             "icon": "RiSparklesLine",
             "image": {
-              "src": "/imgs/features/admin-settings.png",
+              "src": "/imgs/features/why-choose-2.webp",
               "alt": "benefits"
             }
           },
@@ -180,7 +180,7 @@
             "description": "Get started for free and scale as you grow. No hidden fees or long-term contracts.",
             "icon": "RiCreditCard2Line",
             "image": {
-              "src": "/imgs/features/landing-page.png",
+              "src": "/imgs/features/why-choose-3.webp",
               "alt": "benefits"
             }
           }
