@@ -14,11 +14,6 @@
           "icon": "Sparkles"
         },
         {
-          "title": "Showcases",
-          "url": "/showcases",
-          "icon": "Box"
-        },
-        {
           "title": "Pricing",
           "url": "/pricing",
           "icon": "DollarSign"
@@ -71,11 +66,6 @@
             {
               "title": "Features",
               "url": "/#features",
-              "target": "_self"
-            },
-            {
-              "title": "Showcases",
-              "url": "/showcases",
               "target": "_self"
             },
             {

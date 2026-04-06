@@ -19,11 +19,6 @@
           "icon": "Sparkles"
         },
         {
-          "title": "案例展示",
-          "url": "/showcases",
-          "icon": "Box"
-        },
-        {
           "title": "价格",
           "url": "/pricing",
           "icon": "DollarSign"
@@ -131,11 +126,6 @@
             {
               "title": "功能亮点",
               "url": "/#features",
-              "target": "_self"
-            },
-            {
-              "title": "案例展示",
-              "url": "/showcases",
               "target": "_self"
             },
             {

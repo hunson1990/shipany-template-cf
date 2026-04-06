@@ -9,7 +9,7 @@
       "pricing": {
         "id": "pricing",
         "title": "Pricing",
-        "description": "Get all features of ShipAny, Ship your AI SaaS startups fast.",
+        "description": "Get all AI video generation features. Create stunning videos from your photos in seconds.",
         "groups": [
           {
             "name": "one-time",
@@ -29,73 +29,70 @@
         "items": [
           {
             "title": "Starter",
-            "description": "Get started with your first SaaS startup.",
+            "description": "One-time top-up of your credits.",
             "features_title": "Includes",
             "features": [
-              "100 credits, valid for 1 month",
-              "NextJS boilerplate",
-              "SEO-friendly structure",
-              "Payment with Stripe",
-              "Data storage with Supabase",
-              "Google Oauth & One-Tap Login",
-              "i18n support"
+              "300 credits never expires",
+              "25 AI videos never expires",
+              "Duration: 5s & 10s",
+              "Faster generation speed",
+              "No-watermark outputs",
+              "Email Support"
             ],
             "interval": "one-time",
-            "amount": 9900,
+            "amount": 1390,
             "currency": "USD",
-            "price": "$99",
-            "original_price": "$199",
+            "price": "$13.9",
+            "original_price": "$13.9",
             "unit": "",
             "is_featured": false,
             "tip": "Pay once. Build unlimited projects!",
             "button": {
-              "title": "Get ShipAny",
+              "title": "One-time Payment",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "starter",
-            "product_name": "ShipAny Boilerplate Starter",
-            "credits": 100,
+            "product_name": "SoulFuse OneTime Starter",
+            "credits": 300,
             "valid_days": 30,
             "group": "one-time"
           },
           {
             "title": "Standard",
-            "description": "Ship Fast with your SaaS Startups.",
+            "description": "One-time top-up of your credits.",
             "label": "Popular",
             "features_title": "Everything in Starter, plus",
             "features": [
-              "200 credits, valid for 3 month",
-              "Deploy with Vercel or Cloudflare",
-              "Generation of Privacy & Terms",
-              "Google Analytics Integration",
-              "Google Search Console Integration",
-              "Discord community",
-              "Technical support for your first ship",
-              "Lifetime updates"
+              "300 credits never expires",
+              "25 AI videos never expires",
+              "Duration: 5s & 10s",
+              "Faster generation speed",
+              "No-watermark outputs",
+              "Email Support"
             ],
             "interval": "one-time",
-            "amount": 19900,
+            "amount": 49900,
             "currency": "USD",
-            "price": "$199",
-            "original_price": "$299",
+            "price": "$49.9",
+            "original_price": "$49.9",
             "unit": "",
             "is_featured": true,
             "tip": "Pay once. Build unlimited projects!",
             "button": {
-              "title": "Get ShipAny",
+              "title": "One-time Payment",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "standard",
-            "product_name": "ShipAny Boilerplate Standard",
+            "product_name": "SoulFuse OneTime Standard",
             "credits": 200,
             "valid_days": 90,
             "group": "one-time"
           },
           {
             "title": "Premium",
-            "description": "Ship Any AI SaaS Startups.",
+            "description": "One-time top-up of your credits.",
             "features_title": "Everything in Standard, plus",
             "features": [
               "300 credits, valid for 1 year",
@@ -107,20 +104,20 @@
               "Priority Technical Support"
             ],
             "interval": "one-time",
-            "amount": 29900,
+            "amount": 19900,
             "currency": "USD",
-            "price": "$299",
-            "original_price": "$399",
+            "price": "$199",
+            "original_price": "$199",
             "unit": "",
             "is_featured": false,
             "tip": "Pay once. Build unlimited projects!",
             "button": {
-              "title": "Get ShipAny",
+              "title": "One-time Payment",
               "url": "/#pricing",
               "icon": "RiFlashlightFill"
             },
             "product_id": "premium",
-            "product_name": "ShipAny Boilerplate Premium",
+            "product_name": "SoulFuse OneTime Premium",
             "credits": 300,
             "valid_days": 365,
             "group": "one-time"
