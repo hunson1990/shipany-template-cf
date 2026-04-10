@@ -30,6 +30,7 @@
           {
             "title": "入门版",
             "description": "开启你的第一个 SaaS 创业项目。",
+            "discount_label": "52% OFF",
             "features_title": "包含",
             "features": [
               "100 积分，有效期 1 个月",
@@ -72,6 +73,7 @@
             "title": "标准版",
             "description": "快速交付你的 SaaS 创业项目。",
             "label": "热门",
+            "discount_label": "52% OFF",
             "features_title": "包含入门版功能，此外",
             "features": [
               "200 积分，有效期 3 个月",
@@ -255,10 +257,11 @@
           },
           {
             "title": "入门版",
-            "description": "开启你的第一个 SaaS 创业项目。",
+            "description": "",
+            "discount_label": "52% OFF",
             "features_title": "包含",
             "features": [
-              "100 积分，有效期 1 年",
+              "12,000 积分，有效期 1 年",
               "NextJS 项目模板",
               "SEO 友好结构",
               "支持 Stripe 支付",
@@ -267,10 +270,10 @@
               "多语言（i18n）支持"
             ],
             "interval": "year",
-            "amount": 82800,
+            "amount": 18900,
             "currency": "USD",
-            "price": "$69",
-            "original_price": "$89",
+            "price": "$15.8",
+            "original_price": "$32.9",
             "unit": "/ 月",
             "is_featured": false,
             "tip": "按年付费，畅享无限项目部署！",
@@ -288,11 +291,12 @@
           },
           {
             "title": "标准版",
-            "description": "快速交付你的 SaaS 创业项目。",
+            "description": "",
             "label": "热门",
+            "discount_label": "50% OFF",
             "features_title": "包含入门版功能，此外",
             "features": [
-              "200 积分，有效期 1 年",
+              "24,000 积分，有效期 1 年",
               "支持 Vercel 或 Cloudflare 部署",
               "自动生成隐私政策&服务条款",
               "集成 Google Analytics",
@@ -302,10 +306,10 @@
               "终身免费更新"
             ],
             "interval": "year",
-            "amount": 154800,
+            "amount": 29900,
             "currency": "USD",
-            "price": "$129",
-            "original_price": "$169",
+            "price": "$24.9",
+            "original_price": "$49.9",
             "unit": "/ 月",
             "is_featured": true,
             "tip": "按年付费，极速上线你的 SaaS 项目。",
@@ -323,10 +327,11 @@
           },
           {
             "title": "高级版",
-            "description": "交付任意 AI SaaS 创业项目。",
+            "description": "",
+            "discount_label": "52% OFF",
             "features_title": "包含标准版功能，此外",
             "features": [
-              "300 积分，有效期 1 年",
+              "48,000 积分，有效期 1 年",
               "内置 AI 业务功能",
               "用户中心",
               "积分系统",
@@ -335,10 +340,10 @@
               "优先技术支持"
             ],
             "interval": "year",
-            "amount": 226800,
+            "amount": 54900,
             "currency": "USD",
-            "price": "$189",
-            "original_price": "$249",
+            "price": "$45.8",
+            "original_price": "$95.9",
             "unit": "/ 月",
             "is_featured": false,
             "tip": "按年付费，助你交付任何 AI SaaS 项目。",
@@ -360,6 +365,7 @@
   },
   "messages": {
     "current_plan": "当前方案",
-    "processing": "处理中"
+    "processing": "处理中",
+    "cancel_anytime": "随时取消"
   }
 }

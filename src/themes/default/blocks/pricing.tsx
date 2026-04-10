@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Sparkles, Zap } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 
@@ -347,7 +347,7 @@ export function Pricing({
 
       <div className="container">
         {section.groups && section.groups.length > 0 && (
-          <div className="mx-auto mt-8 mb-16 flex w-full justify-center md:max-w-lg">
+          <div className="mx-auto mt-8 mb-16 flex w-full flex-col items-center justify-center md:max-w-lg">
             <Tabs value={group} onValueChange={setGroup} className="">
               <TabsList>
                 {section.groups.map((item, i) => {
@@ -362,6 +362,14 @@ export function Pricing({
                 })}
               </TabsList>
             </Tabs>
+            {(group === 'monthly' || group === 'yearly') && (
+              <div className="mt-3 flex items-center justify-center gap-1.5 rounded-full bg-green-100 px-4 py-2 dark:bg-green-900/40">
+                <Check className="size-4 text-green-600 dark:text-green-400" />
+                <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                  {t('cancel_anytime')}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
@@ -396,6 +404,12 @@ export function Pricing({
                 {item.label && (
                   <span className="absolute inset-x-0 -top-3 mx-auto flex h-6 w-fit items-center rounded-full bg-linear-to-br/increasing from-purple-400 to-amber-300 px-3 py-1 text-xs font-medium text-amber-950 ring-1 ring-white/20 ring-offset-1 ring-offset-gray-950/5 ring-inset">
                     {item.label}
+                  </span>
+                )}
+                {item.discount_label && (
+                  <span className="absolute -top-4 right-4 flex h-12 w-fit items-center gap-1.5 rounded-3xl bg-gradient-to-br from-red-400 to-red-600 px-4 py-1 text-base font-bold text-white shadow-[0_0_15px_rgba(239,68,68,0.7),0_0_30px_rgba(239,68,68,0.4),0_4px_8px_rgba(0,0,0,0.3)]">
+                    <Zap className="size-5 fill-yellow-300 text-yellow-300" />
+                    {item.discount_label}
                   </span>
                 )}
 
