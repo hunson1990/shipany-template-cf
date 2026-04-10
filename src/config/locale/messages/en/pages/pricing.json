@@ -13,7 +13,7 @@
         "groups": [
           {
             "name": "one-time",
-            "title": "Pay as you go"
+            "title": "Pay as you go1"
           },
           {
             "name": "monthly",
@@ -74,7 +74,7 @@
               "Email Support"
             ],
             "interval": "one-time",
-            "amount": 44900,
+            "amount": 4490,
             "currency": "USD",
             "price": "$44.9",
             "original_price": "$50",
@@ -106,7 +106,7 @@
               "Email Support"
             ],
             "interval": "one-time",
-            "amount": 69900,
+            "amount": 6990,
             "currency": "USD",
             "price": "$69.9",
             "original_price": "$100",
@@ -238,13 +238,13 @@
               "Email Support"
             ],
             "interval": "year",
-            "amount": 28800,
+            "amount": 29880,
             "currency": "USD",
-            "price": "$24",
+            "price": "$24.9",
             "original_price": "$50",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "$288 billed yearly",
+            "tip": "$298.8 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
@@ -272,13 +272,13 @@
               "Email Support"
             ],
             "interval": "year",
-            "amount": 45600,
+            "amount": 47880,
             "currency": "USD",
-            "price": "$38",
+            "price": "$39.9",
             "original_price": "$100",
             "unit": "/ month",
             "is_featured": true,
-            "tip": "$456 billed yearly",
+            "tip": "$478.8 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
@@ -305,13 +305,13 @@
               "Email Support"
             ],
             "interval": "year",
-            "amount": 76800,
+            "amount": 77880,
             "currency": "USD",
-            "price": "$64",
+            "price": "$64.9",
             "original_price": "$200",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "$768 billed yearly",
+            "tip": "$778.8 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
