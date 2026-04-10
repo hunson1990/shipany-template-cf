@@ -295,15 +295,14 @@
             "title": "Premium",
             "description": "",
             "discount_label": "68% OFF",
-            "features_title": "Includes",
+            "features_title": "Everything in Standard, plus",
             "features": [
               "48,000 credits, valid for 1 year",
-              "Business Functions with AI",
-              "User Center",
-              "Credits System",
-              "API Sales for your SaaS",
-              "Admin System",
-              "Priority Technical Support"
+              "Up to 4,000 AI videos for 1 year",
+              "Duration: 5s & 10s",
+              "Faster generation speed",
+              "No-watermark outputs",
+              "Email Support"
             ],
             "interval": "year",
             "amount": 76800,
