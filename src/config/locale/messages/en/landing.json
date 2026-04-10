@@ -48,7 +48,7 @@
     "show_theme": true,
     "show_locale": true,
     "topbanner": {
-      "text": "This website is a demo site for the SoulFuse template. To purchase the SoulFuse template, please visit the <a href='https://soulfuse.ai/pricing' class='text-orange-300' target='_blank'>SoulFuse website</a>"
+      "text": ""
     }
   },
   "footer": {

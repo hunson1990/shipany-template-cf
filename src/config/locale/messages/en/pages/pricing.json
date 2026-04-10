@@ -17,13 +17,13 @@
           },
           {
             "name": "monthly",
-            "title": "Monthly",
-            "is_featured": true,
-            "label": "save 15%"
+            "title": "Monthly"
           },
           {
             "name": "yearly",
-            "title": "Annually"
+            "title": "Annually",
+            "is_featured": true,
+            "label": "Up to 68% OFF"
           }
         ],
         "items": [
@@ -231,21 +231,20 @@
             "features_title": "Includes",
             "features": [
               "12,000 credits, valid for 1 year",
-              "NextJS boilerplate",
-              "SEO-friendly structure",
-              "Payment with Stripe",
-              "Data storage with Supabase",
-              "Google Oauth & One-Tap Login",
-              "i18n support"
+              "Up to 1,000 AI videos for 1 year",
+              "Duration: 5s & 10s",
+              "Faster generation speed",
+              "No-watermark outputs",
+              "Email Support"
             ],
             "interval": "year",
-            "amount": 18900,
+            "amount": 28800,
             "currency": "USD",
-            "price": "$15.8",
-            "original_price": "$32.9",
+            "price": "$24",
+            "original_price": "$50",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "",
+            "tip": "$288 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
@@ -262,26 +261,24 @@
             "title": "Standard",
             "description": "",
             "label": "Popular",
-            "discount_label": "50% OFF",
+            "discount_label": "62% OFF",
             "features_title": "Includes",
             "features": [
               "24,000 credits, valid for 1 year",
-              "Deploy with Vercel or Cloudflare",
-              "Generation of Privacy & Terms",
-              "Google Analytics Integration",
-              "Google Search Console Integration",
-              "Discord community",
-              "Technical support for your first ship",
-              "Lifetime updates"
+              "Up to 2,000 AI videos for 1 year",
+              "Duration: 5s & 10s",
+              "Faster generation speed",
+              "No-watermark outputs",
+              "Email Support"
             ],
             "interval": "year",
-            "amount": 29900,
+            "amount": 45600,
             "currency": "USD",
-            "price": "$24.9",
-            "original_price": "$49.9",
+            "price": "$38",
+            "original_price": "$100",
             "unit": "/ month",
             "is_featured": true,
-            "tip": "",
+            "tip": "$456 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
@@ -297,8 +294,8 @@
           {
             "title": "Premium",
             "description": "",
-            "discount_label": "52% OFF",
-            "features_title": "Everything in Standard, plus",
+            "discount_label": "68% OFF",
+            "features_title": "Includes",
             "features": [
               "48,000 credits, valid for 1 year",
               "Business Functions with AI",
@@ -309,13 +306,13 @@
               "Priority Technical Support"
             ],
             "interval": "year",
-            "amount": 54900,
+            "amount": 76800,
             "currency": "USD",
-            "price": "$45.8",
-            "original_price": "$95.9",
+            "price": "$64",
+            "original_price": "$200",
             "unit": "/ month",
             "is_featured": false,
-            "tip": "",
+            "tip": "$768 billed yearly",
             "button": {
               "title": "Subscribe",
               "url": "/#pricing",
