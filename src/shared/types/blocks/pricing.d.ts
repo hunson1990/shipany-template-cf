@@ -21,6 +21,7 @@ export interface PricingItem {
   title?: string;
   description?: string;
   label?: string;
+  discount_label?: string;
 
   currency: string; // default currency
   amount: number; // default price amount
