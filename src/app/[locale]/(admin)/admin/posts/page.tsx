@@ -2,11 +2,12 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { PERMISSIONS, requirePermission } from '@/core/rbac';
 import { Header, Main, MainHeader } from '@/shared/blocks/dashboard';
-import { TableCard } from '@/shared/blocks/table';
-import { getPosts, getPostsCount, Post, PostType } from '@/shared/models/post';
+import { Card, CardContent } from '@/shared/components/ui/card';
+import { getPosts, getPostsCount, PostType, PostStatus } from '@/shared/models/post';
 import { getTaxonomies } from '@/shared/models/taxonomy';
 import { Button, Crumb } from '@/shared/types/blocks/common';
-import { type Table } from '@/shared/types/blocks/table';
+
+import { PostsTable } from './posts-table';
 
 export default async function PostsPage({
   params,
@@ -38,81 +39,30 @@ export default async function PostsPage({
 
   const total = await getPostsCount({
     type: PostType.ARTICLE,
+    status: PostStatus.PUBLISHED,
   });
 
   const posts = await getPosts({
     type: PostType.ARTICLE,
+    status: PostStatus.PUBLISHED,
     page,
     limit,
   });
 
-  const table: Table = {
-    columns: [
-      { name: 'title', title: t('fields.title') },
-      { name: 'authorName', title: t('fields.author_name') },
-      {
-        name: 'image',
-        title: t('fields.image'),
-        type: 'image',
-        metadata: {
-          width: 100,
-          height: 80,
-        },
-        className: 'rounded-md',
-      },
-      {
-        name: 'categories',
-        title: t('fields.categories'),
-        callback: async (item: Post) => {
-          if (!item.categories) {
-            return '-';
-          }
-          const categoriesIds = item.categories.split(',');
-          const categories = await getTaxonomies({
-            ids: categoriesIds,
-          });
-          if (!categories) {
-            return '-';
-          }
-
-          const categoriesNames = categories.map((category) => {
-            return category.title;
-          });
-
-          return categoriesNames.join(', ');
-        },
-      },
-      { name: 'createdAt', title: t('fields.created_at'), type: 'time' },
-      {
-        name: 'action',
-        title: '',
-        type: 'dropdown',
-        callback: (item: Post) => {
-          return [
-            {
-              name: 'edit',
-              title: t('list.buttons.edit'),
-              icon: 'RiEditLine',
-              url: `/admin/posts/${item.id}/edit`,
-            },
-            {
-              name: 'view',
-              title: t('list.buttons.view'),
-              icon: 'RiEyeLine',
-              url: `/blog/${item.slug}`,
-              target: '_blank',
-            },
-          ];
-        },
-      },
-    ],
-    data: posts,
-    pagination: {
-      total,
-      page,
-      limit,
-    },
-  };
+  // Get categories for each post
+  const postsWithCategories = await Promise.all(
+    posts.map(async (post) => {
+      if (!post.categories) {
+        return { ...post, categoriesNames: '-' };
+      }
+      const categoriesIds = post.categories.split(',');
+      const categories = await getTaxonomies({
+        ids: categoriesIds,
+      });
+      const categoriesNames = categories?.map((c) => c.title).join(', ') || '-';
+      return { ...post, categoriesNames };
+    })
+  );
 
   const actions: Button[] = [
     {
@@ -128,7 +78,28 @@ export default async function PostsPage({
       <Header crumbs={crumbs} />
       <Main>
         <MainHeader title={t('list.title')} actions={actions} />
-        <TableCard table={table} />
+        <Card>
+          <CardContent className="p-0">
+            <PostsTable
+              posts={postsWithCategories.map((post) => ({
+                id: post.id,
+                title: post.title || '',
+                slug: post.slug || '',
+                authorName: post.authorName || '',
+                image: post.image || '',
+                categories: post.categoriesNames,
+                createdAt: post.createdAt,
+              }))}
+              editLabel={t('list.buttons.edit')}
+              viewLabel={t('list.buttons.view')}
+              deleteLabel={t('list.buttons.delete')}
+              cancelLabel={t('delete.cancel')}
+              confirmLabel={t('delete.confirm')}
+              deleteTitle={t('delete.title')}
+              deleteDescription={t.raw('delete.description')}
+            />
+          </CardContent>
+        </Card>
       </Main>
     </>
   );

@@ -56,5 +56,11 @@
     "buttons": {
       "submit": "Edit Post"
     }
+  },
+  "delete": {
+    "title": "Are you sure?",
+    "description": "This will delete the post \"{title}\". This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete"
   }
 }

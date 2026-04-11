@@ -56,5 +56,11 @@
     "buttons": {
       "submit": "编辑文章"
     }
+  },
+  "delete": {
+    "title": "确认删除？",
+    "description": "这将删除文章 \"{title}\"，此操作无法撤销。",
+    "cancel": "取消",
+    "confirm": "删除"
   }
 }

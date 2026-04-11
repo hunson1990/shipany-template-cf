@@ -1,5 +1,11 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getMetadata } from '@/shared/lib/seo';
 import { AppContent } from './app-content';
+
+export const generateMetadata = getMetadata({
+  canonicalUrl: '/app',
+  noIndex: true,
+});
 
 export default async function AppPage({
   params,
